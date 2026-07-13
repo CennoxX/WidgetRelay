@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Tasker Plugin Sample</string>
+    <string name="app_name">WidgetRelay</string>
     <string name="formatted_time">Formatted Time</string>
     <string name="formatted_time_description">The time this action was created formatted with your chosen format</string>
     <string name="format">Format</string>

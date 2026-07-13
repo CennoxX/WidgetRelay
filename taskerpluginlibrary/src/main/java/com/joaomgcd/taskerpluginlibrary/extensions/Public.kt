@@ -9,7 +9,7 @@ import com.joaomgcd.taskerpluginlibrary.condition.TaskerPluginRunnerCondition
  */
 val String.taskerOutputCompatible: String
     get() {
-        var s = this.trim().replace(" ", "").replace("%", "").replace(" ", "_").replace("[]", "").replace("-", "").replace("'", "_").replace("\\[[0-9]+\\]".toRegex(), "").toLowerCase()
+        var s = this.trim().replace(" ", "").replace("%", "").replace(" ", "_").replace("[]", "").replace("-", "").replace("'", "_").replace("\\[[0-9]+\\]".toRegex(), "").lowercase()
         if (s.length < 3) {
             s = pad(s, "a", 3, false)
         }

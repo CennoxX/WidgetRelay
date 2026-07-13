@@ -3,6 +3,9 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" /> <!--Necessary to launch activities from background-->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" />
+    <uses-permission android:name="android.permission.BIND_APPWIDGET" />
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
 
     <application
         android:icon="@mipmap/ic_launcher"
@@ -11,13 +14,9 @@
         android:supportsRtl="true">
 
         <activity android:name=".ActivityMain"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+            android:exported="true"
+            android:label="Tasker Demo"
+            android:theme="@style/AppTheme.NoActionBar" />
         <activity android:name=".ActivityLaunchedFromPlugin"
             android:exported="true">
             <intent-filter>
@@ -28,7 +27,7 @@
 
                 <data
                     android:host="fromplugin"
-                    android:scheme="taskerpluginsample" />
+                    android:scheme="widgetrelay" />
             </intent-filter>
         </activity>
         <activity android:name=".tasker.backgroundwork.ActivityBackgroundWork" />
@@ -89,7 +88,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.joaomgcd.taskerpluginsample.tasker.gettime.ActivityConfigGetTime"
+            android:name="com.cennoxx.widgetrelay.tasker.gettime.ActivityConfigGetTime"
             android:exported="true"
             android:icon="@mipmap/ic_launcher"
             android:label="Time">
@@ -117,7 +116,7 @@
         </activity>
 
         <activity
-            android:name="com.joaomgcd.taskerpluginsample.tasker.gottime.ActivityConfigGotTime"
+            android:name="com.cennoxx.widgetrelay.tasker.gottime.ActivityConfigGotTime"
             android:exported="true"
             android:icon="@mipmap/ic_launcher"
             android:label="Got Time">
@@ -164,7 +163,7 @@
 
 
         <activity
-            android:name="com.joaomgcd.taskerpluginsample.tasker.togglingcondition.ActivityConfigTogglingCondition"
+            android:name="com.cennoxx.widgetrelay.tasker.togglingcondition.ActivityConfigTogglingCondition"
             android:exported="true"
             android:icon="@mipmap/ic_launcher"
             android:label="Toggling">
@@ -172,5 +171,26 @@
                 <action android:name="com.twofortyfouram.locale.intent.action.EDIT_CONDITION" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".widget.ActivityWidgetSelector"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher"
+            android:label="@string/app_name"
+            android:theme="@style/AppTheme.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".widget.ActivityWidgetDetail"
+            android:exported="false"
+            android:icon="@mipmap/ic_launcher"
+            android:label="Widget Data"
+            android:theme="@style/AppTheme.NoActionBar" />
+
     </application>
 </manifest>

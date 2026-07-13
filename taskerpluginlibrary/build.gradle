@@ -5,13 +5,12 @@ tasks.withType(Javadoc).all {
     enabled = false
 }
 android {
-    compileSdk 34
+    compileSdk 37
 
 
 
     defaultConfig {
         minSdkVersion 16
-        targetSdkVersion 34
         consumerProguardFiles 'proguard-rules.pro'
     }
     buildTypes {
@@ -21,11 +20,19 @@ android {
     }
 
     compileOptions {
-        targetCompatibility 17
-        sourceCompatibility 17
+        targetCompatibility 21
+        sourceCompatibility 21
     }
     namespace 'com.joaomgcd.taskerpluginlibrary'
-
+    lint {
+        targetSdk 37
+    }
+    testOptions {
+        targetSdk 37
+    }
+    kotlinOptions {
+        jvmTarget = "21"
+    }
 }
 
 dependencies {

@@ -1,0 +1,11 @@
+<resources>
+
+    <!-- Follows the system light/dark mode on modern devices -->
+    <style name="AppTheme.NoActionBar" parent="android:Theme.DeviceDefault.DayNight">
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+    </style>
+
+</resources>
