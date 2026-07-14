@@ -8,16 +8,17 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
-import android.widget.Button
 import android.widget.EditText
 import android.widget.ExpandableListView
 import android.widget.TextView
 import androidx.activity.ComponentActivity
-import androidx.activity.result.contract.ActivityResultContracts
-import com.cennoxx.widgetrelay.ActivityMain
 import com.cennoxx.widgetrelay.R
 import com.cennoxx.widgetrelay.applyEdgeToEdgeInsets
 
+/**
+ * Searchable widget picker. Launched by the Tasker config activity; returns
+ * the selected [AppWidgetProviderInfo] as a parcelable result extra.
+ */
 class ActivityWidgetSelector : ComponentActivity() {
     private lateinit var widgetHost: WidgetHost
     private lateinit var widgetListView: ExpandableListView
@@ -28,16 +29,6 @@ class ActivityWidgetSelector : ComponentActivity() {
 
     private var allApps = emptyList<AppWithWidgets>()
     private var filteredApps = emptyList<AppWithWidgets>()
-
-    private val bindWidgetLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            onWidgetBound()
-        } else {
-            statusTextView.text = "Widget binding was cancelled."
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,12 +52,9 @@ class ActivityWidgetSelector : ComponentActivity() {
 
         widgetListView.setOnChildClickListener { _, _, groupPosition, childPosition, _ ->
             val widget = filteredApps[groupPosition].widgets[childPosition]
-            bindSelectedWidget(widget.info)
+            setResult(Activity.RESULT_OK, Intent().putExtra(EXTRA_PICKED_PROVIDER, widget.info))
+            finish()
             true
-        }
-
-        findViewById<Button>(R.id.taskerDemoButton).setOnClickListener {
-            startActivity(Intent(this, ActivityMain::class.java))
         }
 
         loadWidgetData()
@@ -163,46 +151,8 @@ class ActivityWidgetSelector : ComponentActivity() {
         statusTextView.text = "$widgetCount widgets in ${filteredApps.size} apps"
     }
 
-    private fun bindSelectedWidget(providerInfo: AppWidgetProviderInfo) {
-        val bound = widgetHost.bindWidget(providerInfo)
-        if (bound) {
-            onWidgetBound()
-        } else {
-            statusTextView.text = "Permission needed - requesting via system dialog..."
-            bindWidgetLauncher.launch(widgetHost.getBindIntent())
-        }
-    }
-
-    private fun onWidgetBound() {
-        if (widgetHost.needsConfiguration()) {
-            statusTextView.text = "Widget needs to be configured first..."
-            if (!widgetHost.startConfigureActivity(this, REQUEST_CONFIGURE_WIDGET)) {
-                // Config activity could not be launched - show the widget anyway
-                openWidgetDetail()
-            }
-        } else {
-            openWidgetDetail()
-        }
-    }
-
-    @Deprecated("Deprecated in Java")
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQUEST_CONFIGURE_WIDGET) {
-            if (resultCode == Activity.RESULT_OK) {
-                openWidgetDetail()
-            } else {
-                widgetHost.unbindWidget()
-                statusTextView.text = "Widget configuration was cancelled."
-            }
-        }
-    }
-
-    private fun openWidgetDetail() {
-        startActivity(Intent(this, ActivityWidgetDetail::class.java))
-    }
-
     companion object {
-        private const val REQUEST_CONFIGURE_WIDGET = 1001
+        /** The picked AppWidgetProviderInfo, returned as parcelable result extra. */
+        const val EXTRA_PICKED_PROVIDER = "pickedProvider"
     }
 }

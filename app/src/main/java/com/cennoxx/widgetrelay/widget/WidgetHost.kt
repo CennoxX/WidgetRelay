@@ -8,18 +8,15 @@ import android.appwidget.AppWidgetProviderInfo
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 
+/**
+ * App-wide singleton around [AppWidgetHost]. Widgets are bound by a persistent
+ * appWidgetId (stored in the Tasker configuration) so they can be recreated and
+ * read whenever the plugin action fires.
+ */
 class WidgetHost private constructor(private val context: Context) {
     private val appWidgetManager = AppWidgetManager.getInstance(context)
     private val appWidgetHost = AppWidgetHost(context, WIDGET_HOST_ID)
-    private var currentAppWidgetId: Int? = null
-    private var currentProviderInfo: AppWidgetProviderInfo? = null
-    private var currentHostView: AppWidgetHostView? = null
-
-    private val _widgetNodes = MutableStateFlow<List<WidgetNode>>(emptyList())
-    val widgetNodes = _widgetNodes.asStateFlow()
 
     fun startListening() {
         try {
@@ -29,19 +26,10 @@ class WidgetHost private constructor(private val context: Context) {
         }
     }
 
-    /**
-     * Allocates an ID and tries to bind the provider. Returns true if bound;
-     * false if the user first has to grant permission via [getBindIntent].
-     */
-    fun bindWidget(providerInfo: AppWidgetProviderInfo): Boolean {
+    fun allocateId(): Int = appWidgetHost.allocateAppWidgetId()
+
+    fun bindId(appWidgetId: Int, providerInfo: AppWidgetProviderInfo): Boolean {
         return try {
-            // Release any previously bound widget before binding a new one
-            unbindWidget()
-
-            val appWidgetId = appWidgetHost.allocateAppWidgetId()
-            currentAppWidgetId = appWidgetId
-            currentProviderInfo = providerInfo
-
             appWidgetManager.bindAppWidgetIdIfAllowed(appWidgetId, providerInfo.provider)
         } catch (e: Exception) {
             e.printStackTrace()
@@ -49,26 +37,47 @@ class WidgetHost private constructor(private val context: Context) {
         }
     }
 
-    fun getBindIntent(): Intent {
+    fun getBindIntentForId(appWidgetId: Int, providerInfo: AppWidgetProviderInfo): Intent {
         return Intent(AppWidgetManager.ACTION_APPWIDGET_BIND).apply {
-            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, currentAppWidgetId)
-            putExtra(AppWidgetManager.EXTRA_APPWIDGET_PROVIDER, currentProviderInfo?.provider)
+            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+            putExtra(AppWidgetManager.EXTRA_APPWIDGET_PROVIDER, providerInfo.provider)
         }
     }
 
-    fun getCurrentProviderInfo(): AppWidgetProviderInfo? = currentProviderInfo
+    fun deleteId(appWidgetId: Int) {
+        try {
+            appWidgetHost.deleteAppWidgetId(appWidgetId)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
 
-    /** True if the widget declares a configuration activity that must run before first use. */
-    fun needsConfiguration(): Boolean = currentProviderInfo?.configure != null
+    /** Provider info of a bound id, or null if the id is not (or no longer) bound. */
+    fun getProviderInfoForId(appWidgetId: Int): AppWidgetProviderInfo? {
+        return try {
+            appWidgetManager.getAppWidgetInfo(appWidgetId)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    fun createHostViewForId(activityContext: Context, appWidgetId: Int): AppWidgetHostView? {
+        val providerInfo = getProviderInfoForId(appWidgetId) ?: return null
+        return try {
+            appWidgetHost.createView(activityContext, appWidgetId, providerInfo)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
 
     /**
      * Launches the widget's configuration activity. Uses the AppWidgetHost API
      * so it also works for config activities that are not exported.
      * The result arrives in the activity's onActivityResult with [requestCode].
      */
-    fun startConfigureActivity(activity: Activity, requestCode: Int): Boolean {
-        val appWidgetId = currentAppWidgetId ?: return false
-        val configure = currentProviderInfo?.configure ?: return false
+    fun startConfigureForId(activity: Activity, appWidgetId: Int, requestCode: Int): Boolean {
+        val configure = getProviderInfoForId(appWidgetId)?.configure ?: return false
 
         return try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -86,46 +95,6 @@ class WidgetHost private constructor(private val context: Context) {
         } catch (e: Exception) {
             e.printStackTrace()
             false
-        }
-    }
-
-    /**
-     * Creates the host view for the currently bound widget using the given
-     * (activity) context so it can be shown on any page.
-     */
-    fun createHostView(activityContext: Context): AppWidgetHostView? {
-        val appWidgetId = currentAppWidgetId ?: return null
-        val providerInfo = currentProviderInfo ?: return null
-
-        return try {
-            val hostView = appWidgetHost.createView(activityContext, appWidgetId, providerInfo)
-            currentHostView = hostView
-            hostView
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
-        }
-    }
-
-    fun unbindWidget() {
-        currentAppWidgetId?.let { appWidgetId ->
-            try {
-                appWidgetHost.deleteAppWidgetId(appWidgetId)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-        currentAppWidgetId = null
-        currentProviderInfo = null
-        currentHostView = null
-        _widgetNodes.value = emptyList()
-    }
-
-    fun refreshExtractedData() {
-        currentHostView?.let { hostView ->
-            val extractor = WidgetExtractor(context)
-            val nodes = extractor.extractFromRemoteViews(hostView)
-            _widgetNodes.value = nodes
         }
     }
 
