@@ -15,6 +15,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 private const val ERROR_NOT_BOUND = 1
+private const val ERROR_NO_OVERLAY = 3
 
 @TaskerOutputObject
 class WidgetJsonOutput(
@@ -67,6 +68,12 @@ private fun buildNodeTree(flatNodes: List<WidgetNode>): JSONObject? {
 /** Gets all extracted widget data (every element's text, description, etc.) as a nested JSON tree. */
 class GetWidgetJsonRunner : TaskerPluginRunnerAction<WidgetActionInput, WidgetJsonOutput>() {
     override fun run(context: Context, input: TaskerInput<WidgetActionInput>): TaskerPluginResult<WidgetJsonOutput> {
+        if (!WidgetActionRuntime.hasOverlayPermission(context)) {
+            return TaskerPluginResultErrorWithOutput(
+                ERROR_NO_OVERLAY,
+                "WidgetRelay needs the 'Display over other apps' permission to read widgets in the background. Please grant it in the Android settings."
+            )
+        }
         val nodes = WidgetActionRuntime.captureNodes(context, input.regular)
             ?: return TaskerPluginResultErrorWithOutput(
                 ERROR_NOT_BOUND,

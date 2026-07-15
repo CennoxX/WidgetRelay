@@ -4,7 +4,10 @@ import android.app.Activity
 import android.appwidget.AppWidgetHostView
 import android.appwidget.AppWidgetProviderInfo
 import android.content.Intent
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -357,6 +360,21 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
         }
         if (queryLabel != null && queryEditText.text.isNullOrBlank()) {
             Toast.makeText(this, "Please select an element from the extracted data", Toast.LENGTH_SHORT).show()
+            return
+        }
+        // The runners attach the widget to an invisible overlay window so that
+        // list content loads in the background - that needs this permission
+        if (!WidgetActionRuntime.hasOverlayPermission(this)) {
+            Toast.makeText(
+                this,
+                "Please allow 'Display over other apps' - needed to access the widget when Tasker runs the action",
+                Toast.LENGTH_LONG
+            ).show()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                startActivity(
+                    Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))
+                )
+            }
             return
         }
         // A newly bound widget replaces the one from the previous configuration

@@ -13,6 +13,7 @@ import com.joaomgcd.taskerpluginlibrary.runner.TaskerPluginResultSucess
 
 private const val ERROR_NOT_BOUND = 1
 private const val ERROR_NOT_FOUND = 2
+private const val ERROR_NO_OVERLAY = 3
 
 @TaskerOutputObject
 class WidgetDataOutput(
@@ -23,6 +24,12 @@ class WidgetDataOutput(
 /** Gets the value of a single widget element selected by its path. */
 class GetWidgetDataRunner : TaskerPluginRunnerAction<WidgetActionInput, WidgetDataOutput>() {
     override fun run(context: Context, input: TaskerInput<WidgetActionInput>): TaskerPluginResult<WidgetDataOutput> {
+        if (!WidgetActionRuntime.hasOverlayPermission(context)) {
+            return TaskerPluginResultErrorWithOutput(
+                ERROR_NO_OVERLAY,
+                "WidgetRelay needs the 'Display over other apps' permission to read widgets in the background. Please grant it in the Android settings."
+            )
+        }
         val nodes = WidgetActionRuntime.captureNodes(context, input.regular)
             ?: return TaskerPluginResultErrorWithOutput(
                 ERROR_NOT_BOUND,

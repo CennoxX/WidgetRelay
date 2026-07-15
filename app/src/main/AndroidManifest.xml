@@ -2,6 +2,9 @@
 
     <uses-permission android:name="android.permission.BIND_APPWIDGET" />
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+    <!-- Invisible overlay window: widgets must be attached to a real window so
+         their collection views (ListView etc.) load content at runtime -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <application
         android:icon="@mipmap/ic_launcher"
