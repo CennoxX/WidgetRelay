@@ -45,6 +45,9 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
     protected open val queryLabel: String? = null
     protected abstract val helper: TaskerPluginConfigHelper<WidgetActionInput, *, *>
 
+    /** What tapping an element in the extracted-data list puts into the query field. */
+    protected open fun queryValueForNode(node: WidgetNode): String? = node.pathInTree
+
     override val context get() = applicationContext
 
     private lateinit var widgetHost: WidgetHost
@@ -109,7 +112,9 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
         if (label != null) {
             findViewById<TextView>(R.id.queryLabel).text = label
             nodesListView.setOnItemClickListener { _, _, position, _ ->
-                currentNodes.getOrNull(position)?.let { queryEditText.setText(it.pathInTree) }
+                currentNodes.getOrNull(position)
+                    ?.let { queryValueForNode(it) }
+                    ?.let { queryEditText.setText(it) }
             }
         } else {
             findViewById<View>(R.id.queryRow).visibility = View.GONE

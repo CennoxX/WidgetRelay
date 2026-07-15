@@ -15,6 +15,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.AdapterView
+import android.widget.TextView
 import com.cennoxx.widgetrelay.widget.WidgetExtractor
 import com.cennoxx.widgetrelay.widget.WidgetHost
 import com.cennoxx.widgetrelay.widget.WidgetNode
@@ -75,6 +76,39 @@ object WidgetActionRuntime {
             }
         }
         return if (bound) result else ClickResult.NOT_BOUND
+    }
+
+    /**
+     * Must be called from a background thread (Tasker runners are).
+     * Performs a click on the first element whose text or content description
+     * equals [text] (trimmed), firing the provider's PendingIntent.
+     */
+    fun clickText(context: Context, input: WidgetActionInput, text: String): ClickResult {
+        var result = ClickResult.NOT_FOUND
+        val bound = withAttachedWidget(context, input) { hostView ->
+            val target = findViewByText(hostView, text.trim())
+            if (target == null) {
+                false // collection content may still be loading - keep polling
+            } else {
+                result = performClickOn(hostView, target)
+                true
+            }
+        }
+        return if (bound) result else ClickResult.NOT_BOUND
+    }
+
+    /** Depth-first search for a view whose text or content description matches. */
+    private fun findViewByText(view: View, text: String): View? {
+        if (view is TextView && view.text?.toString()?.trim() == text) return view
+        if (view.contentDescription?.toString()?.trim() == text) return view
+        if (view is ViewGroup) {
+            repeat(view.childCount) { index ->
+                view.getChildAt(index)?.let { child ->
+                    findViewByText(child, text)?.let { return it }
+                }
+            }
+        }
+        return null
     }
 
     /**
