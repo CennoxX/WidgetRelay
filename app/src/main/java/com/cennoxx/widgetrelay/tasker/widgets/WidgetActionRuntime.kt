@@ -56,6 +56,27 @@ object WidgetActionRuntime {
         return if (bound) nodes ?: emptyList() else null
     }
 
+    enum class ClickResult { NOT_BOUND, NOT_FOUND, NOT_CLICKABLE, CLICKED }
+
+    /**
+     * Must be called from a background thread (Tasker runners are).
+     * Performs a click on the element at [path] (e.g. "/root/0/1"), firing
+     * the PendingIntent the widget provider attached via RemoteViews.
+     */
+    fun clickPath(context: Context, input: WidgetActionInput, path: String): ClickResult {
+        var result = ClickResult.NOT_FOUND
+        val bound = withAttachedWidget(context, input) { hostView ->
+            val target = findViewByPath(hostView, path)
+            if (target == null) {
+                false // collection content may still be loading - keep polling
+            } else {
+                result = performClickOn(hostView, target)
+                true
+            }
+        }
+        return if (bound) result else ClickResult.NOT_BOUND
+    }
+
     /**
      * Attaches the widget host view to an invisible overlay window and calls
      * [poll] on the main thread every [POLL_MS] (after an initial [SETTLE_MS])
@@ -152,6 +173,41 @@ object WidgetActionRuntime {
         }
     }
 
+    private fun performClickOn(hostView: AppWidgetHostView, target: View): ClickResult {
+        // RemoteViews often attaches the click PendingIntent to an ancestor
+        // (e.g. the row container), so walk up until a view handles the click
+        var view: View? = target
+        while (view != null) {
+            if (view.hasOnClickListeners() && view.performClick()) {
+                return ClickResult.CLICKED
+            }
+            val parent = if (view === hostView) null else view.parent as? View
+            // Collection rows are clicked through the AdapterView, which fills
+            // the provider's PendingIntent template with the row's fill-in intent
+            if (parent is AdapterView<*>) {
+                val position = parent.getPositionForView(view)
+                if (position != AdapterView.INVALID_POSITION &&
+                    parent.performItemClick(view, position, parent.getItemIdAtPosition(position))
+                ) {
+                    return ClickResult.CLICKED
+                }
+            }
+            view = parent
+        }
+        return ClickResult.NOT_CLICKABLE
+    }
+
+    /** Resolves paths in the extractor's format: "/root", "/root/0/1", ... */
+    private fun findViewByPath(hostView: AppWidgetHostView, path: String): View? {
+        if (path == "/root") return hostView
+        if (!path.startsWith("/root/")) return null
+        var view: View = hostView
+        for (segment in path.removePrefix("/root/").split('/')) {
+            val index = segment.toIntOrNull() ?: return null
+            val group = view as? ViewGroup ?: return null
+            view = group.getChildAt(index) ?: return null
+        }
+        return view
     }
 
     /** Same launcher-grid cell math as the widget detail page. */

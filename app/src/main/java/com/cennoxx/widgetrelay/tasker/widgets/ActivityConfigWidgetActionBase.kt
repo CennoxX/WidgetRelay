@@ -332,7 +332,7 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
         val regular = input.regular
         suppressListeners = true
         spanXSpinner.setSelection(spans.indexOf(regular.spanX.coerceIn(1, 5)))
-        spanYSpinner.setSelection(spans.indexOf(regular.spanY.coerceIn(1, 5)))
+        spanYSpinner.setSelection(spans.indexOf(regular.spanY.coerceIn(1, 4)))
         queryEditText.setText(regular.query ?: "")
         suppressListeners = false
 
