@@ -46,8 +46,9 @@ class GetWidgetDataHelper(config: TaskerPluginConfig<WidgetActionInput>) :
         val regular = input.regular
         blurbBuilder.append("App: ${regular.appName}\n")
         blurbBuilder.append("Widget: ${regular.widgetLabel}\n")
-        blurbBuilder.append("Size: ${regular.spanX} x ${regular.spanY}\n\n")
-        blurbBuilder.append("Get '${regular.query}' from Widget '${regular.widgetLabel}' from App '${regular.appName}'")
+        blurbBuilder.append("Size: ${regular.spanX} x ${regular.spanY}\n")
+        blurbBuilder.append("Path: ${regular.query}\n\n")
+        blurbBuilder.append("Get '${regular.query}' of widget '${regular.widgetLabel}' from app '${regular.appName}'")
     }
 }
 

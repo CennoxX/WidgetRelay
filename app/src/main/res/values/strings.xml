@@ -7,4 +7,6 @@
     <string name="query">Element Path</string>
     <string name="widget_value">Widget Value</string>
     <string name="widget_value_description">The value of the selected widget element (text, description or resource id)</string>
+    <string name="widget_json">Widget JSON</string>
+    <string name="widget_json_description">All extracted widget elements (type, text, description, children) as a JSON object</string>
 </resources>

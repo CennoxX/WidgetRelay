@@ -88,20 +88,28 @@
         android:padding="8dp"
         android:layout_marginBottom="8dp" />
 
-    <TextView
-        android:id="@+id/queryLabel"
+    <LinearLayout
+        android:id="@+id/queryRow"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="14sp"
-        android:layout_marginBottom="4dp" />
+        android:orientation="vertical">
 
-    <EditText
-        android:id="@+id/queryEditText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:inputType="text"
-        android:padding="12dp"
-        android:layout_marginBottom="8dp" />
+        <TextView
+            android:id="@+id/queryLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:layout_marginBottom="4dp" />
+
+        <EditText
+            android:id="@+id/queryEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="text"
+            android:padding="12dp"
+            android:layout_marginBottom="8dp" />
+
+    </LinearLayout>
 
     <TextView
         android:id="@+id/statusText"
@@ -118,6 +126,7 @@
         android:layout_marginBottom="4dp">
 
         <TextView
+            android:id="@+id/nodesHeaderText"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"

@@ -33,9 +33,13 @@ import com.joaomgcd.taskerpluginlibrary.input.TaskerInput
  * Shared config UI for widget plugin actions. Reuses the app's searchable
  * widget selector (pick mode) and shows the live widget preview like the
  * detail page, so the user sees exactly which element they are selecting.
+ *
+ * When [queryLabel] is null, the action doesn't need a single selected
+ * element (e.g. it reads all extracted data) - the element path row is
+ * hidden and the extracted data list becomes view-only.
  */
 abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<WidgetActionInput> {
-    protected abstract val queryLabel: String
+    protected open val queryLabel: String? = null
     protected abstract val helper: TaskerPluginConfigHelper<WidgetActionInput, *, *>
 
     override val context get() = applicationContext
@@ -87,7 +91,6 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
         setContentView(R.layout.activity_config_widget_action)
         applyEdgeToEdgeInsets()
 
-        findViewById<TextView>(R.id.queryLabel).text = queryLabel
         appNameText = findViewById(R.id.appNameText)
         widgetNameText = findViewById(R.id.widgetNameText)
         spanXSpinner = findViewById(R.id.spanXSpinner)
@@ -99,8 +102,15 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
 
         setupSizeSpinners()
 
-        nodesListView.setOnItemClickListener { _, _, position, _ ->
-            currentNodes.getOrNull(position)?.let { queryEditText.setText(it.pathInTree) }
+        val label = queryLabel
+        if (label != null) {
+            findViewById<TextView>(R.id.queryLabel).text = label
+            nodesListView.setOnItemClickListener { _, _, position, _ ->
+                currentNodes.getOrNull(position)?.let { queryEditText.setText(it.pathInTree) }
+            }
+        } else {
+            findViewById<View>(R.id.queryRow).visibility = View.GONE
+            findViewById<TextView>(R.id.nodesHeaderText).text = "Extracted data:"
         }
         findViewById<Button>(R.id.changeWidgetButton).setOnClickListener { launchWidgetPicker() }
         findViewById<Button>(R.id.refreshButton).setOnClickListener {
@@ -345,7 +355,7 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
             Toast.makeText(this, "Please select a widget first", Toast.LENGTH_SHORT).show()
             return
         }
-        if (queryEditText.text.isNullOrBlank()) {
+        if (queryLabel != null && queryEditText.text.isNullOrBlank()) {
             Toast.makeText(this, "Please select an element from the extracted data", Toast.LENGTH_SHORT).show()
             return
         }
