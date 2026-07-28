@@ -133,8 +133,28 @@ The APK lands in `app/build/outputs/apk/debug/`. To install directly:
 ./gradlew installDebug
 ```
 
-Release builds are not signed by this repo's configuration — add your own
-keystore in `app/build.gradle` if you want to publish one.
+### Signing a release build
+
+`assembleRelease` produces an unsigned APK unless you provide a keystore.
+Create one (once — and back it up, an APK signed with a different key cannot
+replace an installed one):
+
+```bash
+keytool -genkey -v -keystore widgetrelay.jks -alias widgetrelay -keyalg RSA -keysize 2048 -validity 10000
+```
+
+Then put a `keystore.properties` in the project root:
+
+```properties
+storeFile=widgetrelay.jks
+storePassword=<the password you chose>
+keyAlias=widgetrelay
+keyPassword=<the key password you chose>
+```
+
+Both the keystore and that file are gitignored. With them in place,
+`./gradlew assembleRelease` writes a signed APK to
+`app/build/outputs/apk/release/`.
 
 ---
 
