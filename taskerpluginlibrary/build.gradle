@@ -1,0 +1,54 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+tasks.withType(Javadoc).all {
+    enabled = false
+}
+android {
+    compileSdk 34
+
+
+
+    defaultConfig {
+        minSdkVersion 16
+        targetSdkVersion 34
+        consumerProguardFiles 'proguard-rules.pro'
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        targetCompatibility 17
+        sourceCompatibility 17
+    }
+    namespace 'com.joaomgcd.taskerpluginlibrary'
+
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+}
+repositories {
+    mavenCentral()
+}
+ext {
+    PUBLISH_GROUP_ID = 'com.joaomgcd'
+    PUBLISH_VERSION = '0.4.10'
+    PUBLISH_ARTIFACT_ID = 'taskerpluginlibrary'
+}
+apply from: "${rootProject.projectDir}/scripts/publish-mavencentral.gradle"
+
+//to update:
+// - change build variants to release
+// - rebuild so that the the release aar for the plugin is generated from the latest code
+// - Run the "Publish To Maven Central" script
+// - Go to "https://s01.oss.sonatype.org/"
+// - Go to "Staging Repositories"
+// - Press the "Close" button and wait
+// - Press the "Release" button and wait
+// - Check if release is live in "Repositories"
