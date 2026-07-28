@@ -1,6 +1,8 @@
 package com.cennoxx.widgetrelay.tasker.widgets
 
 import android.content.Context
+import com.cennoxx.widgetrelay.R
+import com.cennoxx.widgetrelay.widget.WidgetNode
 import com.joaomgcd.taskerpluginlibrary.action.TaskerPluginRunnerActionNoOutput
 import com.joaomgcd.taskerpluginlibrary.config.TaskerPluginConfig
 import com.joaomgcd.taskerpluginlibrary.config.TaskerPluginConfigHelperNoOutput
@@ -18,25 +20,22 @@ private const val ERROR_NO_OVERLAY = 4
 class ClickWidgetRunner : TaskerPluginRunnerActionNoOutput<WidgetActionInput>() {
     override fun run(context: Context, input: TaskerInput<WidgetActionInput>): TaskerPluginResult<Unit> {
         if (!WidgetActionRuntime.hasOverlayPermission(context)) {
-            return TaskerPluginResultError(
-                ERROR_NO_OVERLAY,
-                "WidgetRelay needs the 'Display over other apps' permission to click widgets in the background. Please grant it in the Android settings."
-            )
+            return TaskerPluginResultError(ERROR_NO_OVERLAY, context.getString(R.string.error_no_overlay))
         }
-        val path = input.regular.query
-            ?: return TaskerPluginResultError(ERROR_NOT_FOUND, "No element path configured. Reconfigure the Tasker action.")
+        val path = input.regular.query?.takeIf { it.isNotBlank() }
+            ?: return TaskerPluginResultError(ERROR_NOT_FOUND, context.getString(R.string.error_no_path))
         return when (WidgetActionRuntime.clickPath(context, input.regular, path)) {
             WidgetActionRuntime.ClickResult.NOT_BOUND -> TaskerPluginResultError(
                 ERROR_NOT_BOUND,
-                "Widget '${input.regular.widgetLabel ?: input.regular.appWidgetId}' is not bound anymore. Reconfigure the Tasker action."
+                context.getString(R.string.error_not_bound, input.regular.widgetLabel ?: input.regular.appWidgetId)
             )
             WidgetActionRuntime.ClickResult.NOT_FOUND -> TaskerPluginResultError(
                 ERROR_NOT_FOUND,
-                "No element found at path '$path'"
+                context.getString(R.string.error_path_not_found, path)
             )
             WidgetActionRuntime.ClickResult.NOT_CLICKABLE -> TaskerPluginResultError(
                 ERROR_NOT_CLICKABLE,
-                "Element at path '$path' (or any of its parents) is not clickable"
+                context.getString(R.string.error_path_not_clickable, path)
             )
             WidgetActionRuntime.ClickResult.CLICKED -> TaskerPluginResultSucess()
         }
@@ -48,18 +47,19 @@ class ClickWidgetHelper(config: TaskerPluginConfig<WidgetActionInput>) :
     override val inputClass = WidgetActionInput::class.java
     override val runnerClass = ClickWidgetRunner::class.java
 
-    // All fields are marked ignoreInStringBlurb - the blurb below is fully custom
     override fun addToStringBlurb(input: TaskerInput<WidgetActionInput>, blurbBuilder: StringBuilder) {
         val regular = input.regular
-        blurbBuilder.append("App: ${regular.appName}\n")
-        blurbBuilder.append("Widget: ${regular.widgetLabel}\n")
-        blurbBuilder.append("Size: ${regular.spanX} x ${regular.spanY}\n")
-        blurbBuilder.append("Path: ${regular.query}\n\n")
-        blurbBuilder.append("Click '${regular.query}' of widget '${regular.widgetLabel}' from app '${regular.appName}'")
+        blurbBuilder.appendWidgetBlurbHeader(context, regular)
+        blurbBuilder.appendLine(context.getString(R.string.blurb_path, regular.query))
+        blurbBuilder.appendLine()
+        blurbBuilder.append(
+            context.getString(R.string.blurb_click_path, regular.query, regular.widgetLabel, regular.appName)
+        )
     }
 }
 
 class ActivityConfigClickWidget : ActivityConfigWidgetActionBase() {
-    override val queryLabel = "Element path (tap an element below)"
+    override val queryLabelRes = R.string.label_element_path
+    override fun isNodeSelectable(node: WidgetNode) = node.clickable
     override val helper by lazy { ClickWidgetHelper(this) }
 }

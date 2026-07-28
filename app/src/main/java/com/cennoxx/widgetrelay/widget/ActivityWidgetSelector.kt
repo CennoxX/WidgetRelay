@@ -148,7 +148,8 @@ class ActivityWidgetSelector : ComponentActivity() {
         }
 
         val widgetCount = filteredApps.sumOf { it.widgets.size }
-        statusTextView.text = "$widgetCount widgets in ${filteredApps.size} apps"
+        statusTextView.text =
+            getString(R.string.status_widgets_in_apps, widgetCount, filteredApps.size)
     }
 
     companion object {

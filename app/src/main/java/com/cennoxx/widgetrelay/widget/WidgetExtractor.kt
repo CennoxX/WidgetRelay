@@ -4,6 +4,7 @@ import android.appwidget.AppWidgetHostView
 import android.content.Context
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
 import android.widget.ImageView
 import android.widget.TextView
 import java.util.LinkedList
@@ -14,13 +15,13 @@ class WidgetExtractor(private val context: Context) {
         if (hostView == null) return emptyList()
 
         val nodes = mutableListOf<WidgetNode>()
-        val queue = LinkedList<Pair<View, String>>()
+        val queue = LinkedList<Triple<View, String, Boolean>>()
 
-        queue.add(hostView to "/root")
+        queue.add(Triple(hostView, "/root", hostView.hasOnClickListeners()))
 
         while (queue.isNotEmpty()) {
-            val (view, path) = queue.removeFirst()
-            val node = createNodeFromView(view, path)
+            val (view, path, clickable) = queue.removeFirst()
+            val node = createNodeFromView(view, path, clickable)
             nodes.add(node)
 
             if (view is ViewGroup) {
@@ -28,7 +29,12 @@ class WidgetExtractor(private val context: Context) {
                     val child = view.getChildAt(index)
                     if (child != null) {
                         val childPath = "$path/$index"
-                        queue.add(child to childPath)
+                        // A click is dispatched to the nearest ancestor that handles
+                        // it; collection rows are clicked through their AdapterView
+                        val childClickable = clickable ||
+                            child.hasOnClickListeners() ||
+                            view is AdapterView<*>
+                        queue.add(Triple(child, childPath, childClickable))
                     }
                 }
             }
@@ -37,7 +43,7 @@ class WidgetExtractor(private val context: Context) {
         return nodes
     }
 
-    private fun createNodeFromView(view: View, path: String): WidgetNode {
+    private fun createNodeFromView(view: View, path: String, clickable: Boolean): WidgetNode {
         val className = view::class.simpleName ?: "Unknown"
         val resourceId = view.id
         val resourceIdName = getResourceIdName(resourceId)
@@ -64,7 +70,8 @@ class WidgetExtractor(private val context: Context) {
             text = text,
             contentDescription = contentDescription,
             childCount = childCount,
-            bestValue = bestValue
+            bestValue = bestValue,
+            clickable = clickable
         )
     }
 

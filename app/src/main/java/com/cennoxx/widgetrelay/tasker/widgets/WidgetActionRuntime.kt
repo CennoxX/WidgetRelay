@@ -17,6 +17,7 @@ import android.view.WindowManager
 import android.widget.AdapterView
 import android.widget.TextView
 import com.cennoxx.widgetrelay.widget.WidgetExtractor
+import com.cennoxx.widgetrelay.widget.WidgetGrid
 import com.cennoxx.widgetrelay.widget.WidgetHost
 import com.cennoxx.widgetrelay.widget.WidgetNode
 import java.util.concurrent.CountDownLatch
@@ -30,29 +31,52 @@ import java.util.concurrent.TimeUnit
  * the provider to deliver its RemoteViews, then extracts or clicks.
  */
 object WidgetActionRuntime {
-    private const val SETTLE_MS = 1500L
-    private const val POLL_MS = 750L
+    /** Delay before the first check - just enough for the initial layout pass. */
+    private const val FIRST_POLL_MS = 50L
+    private const val POLL_MS = 100L
+    /** A full capture is only finished once the tree was unchanged this long... */
+    private const val STABLE_MS = 500L
+    /** ...and never before this, so async collection content can't be missed. */
+    private const val MIN_CAPTURE_MS = 800L
     private const val TIMEOUT_MS = 8000L
 
-    /** The invisible overlay window needs "Display over other apps" on M+. */
-    fun hasOverlayPermission(context: Context) =
-        Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.canDrawOverlays(context)
+    /** The invisible overlay window needs the "Display over other apps" permission. */
+    fun hasOverlayPermission(context: Context) = Settings.canDrawOverlays(context)
 
     /**
      * Must be called from a background thread (Tasker runners are).
      * Returns null if the widget id is no longer bound or inflation failed.
-     * Polls until the extracted tree is stable so asynchronously loaded
-     * collection content (list rows etc.) is included.
+     *
+     * [stopWhen] lets callers that only need one specific element return as
+     * soon as it shows up. Without it the tree has to settle first, so
+     * asynchronously loaded collection content (list rows etc.) is included.
      */
-    fun captureNodes(context: Context, input: WidgetActionInput): List<WidgetNode>? {
+    fun captureNodes(
+        context: Context,
+        input: WidgetActionInput,
+        stopWhen: ((List<WidgetNode>) -> Boolean)? = null
+    ): List<WidgetNode>? {
+        val extractor = WidgetExtractor(context)
+        val start = SystemClock.uptimeMillis()
         var previous: List<WidgetNode>? = null
+        var stableSince = start
         var nodes: List<WidgetNode>? = null
+
         val bound = withAttachedWidget(context, input) { hostView ->
-            val extracted = WidgetExtractor(context).extractFromRemoteViews(hostView)
-            val stable = extracted == previous
-            previous = extracted
+            val extracted = extractor.extractFromRemoteViews(hostView)
             nodes = extracted
-            stable
+            if (stopWhen != null) {
+                stopWhen(extracted)
+            } else {
+                val now = SystemClock.uptimeMillis()
+                if (extracted != previous) {
+                    previous = extracted
+                    stableSince = now
+                    false
+                } else {
+                    now - stableSince >= STABLE_MS && now - start >= MIN_CAPTURE_MS
+                }
+            }
         }
         return if (bound) nodes ?: emptyList() else null
     }
@@ -113,7 +137,7 @@ object WidgetActionRuntime {
 
     /**
      * Attaches the widget host view to an invisible overlay window and calls
-     * [poll] on the main thread every [POLL_MS] (after an initial [SETTLE_MS])
+     * [poll] on the main thread every [POLL_MS] (starting after [FIRST_POLL_MS])
      * until it returns true or [TIMEOUT_MS] elapses, then removes the window.
      * Returns false if the widget id is no longer bound.
      */
@@ -168,25 +192,20 @@ object WidgetActionRuntime {
                         handler.postDelayed(tick, POLL_MS)
                     }
                 }
-                // Give the provider time to deliver its (resized) RemoteViews
-                handler.postDelayed(tick, SETTLE_MS)
+                handler.postDelayed(tick, FIRST_POLL_MS)
             } catch (e: Exception) {
                 e.printStackTrace()
                 latch.countDown()
             }
         }
 
-        latch.await(TIMEOUT_MS + SETTLE_MS + 2000, TimeUnit.MILLISECONDS)
+        latch.await(TIMEOUT_MS + 2000, TimeUnit.MILLISECONDS)
         return bound
     }
 
-    /** A zero-alpha, non-interactive window sized with the launcher grid cell math. */
+    /** A zero-alpha, non-interactive window sized like a widget on the home screen. */
     private fun invisibleOverlayParams(context: Context, spanX: Int, spanY: Int): WindowManager.LayoutParams {
-        val metrics = context.resources.displayMetrics
-        val density = metrics.density
-        val availableWidth = metrics.widthPixels - (48 * density).toInt()
-        val columnWidth = availableWidth / 5
-        val rowHeight = (columnWidth * 1.4f).toInt()
+        val (widthPx, heightPx) = WidgetGrid.sizePx(context, spanX, spanY)
         val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
         } else {
@@ -194,8 +213,8 @@ object WidgetActionRuntime {
             WindowManager.LayoutParams.TYPE_PHONE
         }
         return WindowManager.LayoutParams(
-            spanX * columnWidth,
-            spanY * rowHeight,
+            widthPx,
+            heightPx,
             type,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                 WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
@@ -244,16 +263,9 @@ object WidgetActionRuntime {
         return view
     }
 
-    /** Same launcher-grid cell math as the widget detail page. */
+    /** Tells the provider which size to render for, so it picks the right layout. */
     fun applySize(context: Context, hostView: AppWidgetHostView, spanX: Int, spanY: Int) {
-        val metrics = context.resources.displayMetrics
-        val density = metrics.density
-        val availableWidth = metrics.widthPixels - (48 * density).toInt()
-        val columnWidth = availableWidth / 5
-        val rowHeight = (columnWidth * 1.4f).toInt()
-        val widthDp = (spanX * columnWidth / density).toInt()
-        val heightDp = (spanY * rowHeight / density).toInt()
-
+        val (widthDp, heightDp) = WidgetGrid.sizeDp(context, spanX, spanY)
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 hostView.updateAppWidgetSize(

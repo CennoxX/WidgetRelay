@@ -1,6 +1,7 @@
 package com.cennoxx.widgetrelay.tasker.widgets
 
 import android.content.Context
+import com.cennoxx.widgetrelay.R
 import com.joaomgcd.taskerpluginlibrary.action.TaskerPluginRunnerAction
 import com.joaomgcd.taskerpluginlibrary.config.TaskerPluginConfig
 import com.joaomgcd.taskerpluginlibrary.config.TaskerPluginConfigHelper
@@ -27,17 +28,27 @@ class GetWidgetDataRunner : TaskerPluginRunnerAction<WidgetActionInput, WidgetDa
         if (!WidgetActionRuntime.hasOverlayPermission(context)) {
             return TaskerPluginResultErrorWithOutput(
                 ERROR_NO_OVERLAY,
-                "WidgetRelay needs the 'Display over other apps' permission to read widgets in the background. Please grant it in the Android settings."
+                context.getString(R.string.error_no_overlay)
             )
         }
-        val nodes = WidgetActionRuntime.captureNodes(context, input.regular)
+        val path = input.regular.query
+            ?: return TaskerPluginResultErrorWithOutput(
+                ERROR_NOT_FOUND,
+                context.getString(R.string.error_no_path)
+            )
+        // Only this one element is needed - no need to wait for the rest of the tree
+        val nodes = WidgetActionRuntime.captureNodes(context, input.regular) { nodes ->
+            nodes.any { it.pathInTree == path }
+        }
             ?: return TaskerPluginResultErrorWithOutput(
                 ERROR_NOT_BOUND,
-                "Widget '${input.regular.widgetLabel ?: input.regular.appWidgetId}' is not bound anymore. Reconfigure the Tasker action."
+                context.getString(R.string.error_not_bound, input.regular.widgetLabel ?: input.regular.appWidgetId)
             )
-        val path = input.regular.query
         val node = nodes.firstOrNull { it.pathInTree == path }
-            ?: return TaskerPluginResultErrorWithOutput(ERROR_NOT_FOUND, "No element found at path '$path'")
+            ?: return TaskerPluginResultErrorWithOutput(
+                ERROR_NOT_FOUND,
+                context.getString(R.string.error_path_not_found, path)
+            )
         return TaskerPluginResultSucess(WidgetDataOutput(node.bestValue ?: ""))
     }
 }
@@ -48,18 +59,18 @@ class GetWidgetDataHelper(config: TaskerPluginConfig<WidgetActionInput>) :
     override val outputClass = WidgetDataOutput::class.java
     override val runnerClass = GetWidgetDataRunner::class.java
 
-    // All fields are marked ignoreInStringBlurb - the blurb below is fully custom
     override fun addToStringBlurb(input: TaskerInput<WidgetActionInput>, blurbBuilder: StringBuilder) {
         val regular = input.regular
-        blurbBuilder.append("App: ${regular.appName}\n")
-        blurbBuilder.append("Widget: ${regular.widgetLabel}\n")
-        blurbBuilder.append("Size: ${regular.spanX} x ${regular.spanY}\n")
-        blurbBuilder.append("Path: ${regular.query}\n\n")
-        blurbBuilder.append("Get '${regular.query}' of widget '${regular.widgetLabel}' from app '${regular.appName}'")
+        blurbBuilder.appendWidgetBlurbHeader(context, regular)
+        blurbBuilder.appendLine(context.getString(R.string.blurb_path, regular.query))
+        blurbBuilder.appendLine()
+        blurbBuilder.append(
+            context.getString(R.string.blurb_get_data, regular.query, regular.widgetLabel, regular.appName)
+        )
     }
 }
 
 class ActivityConfigGetWidgetData : ActivityConfigWidgetActionBase() {
-    override val queryLabel = "Element path (tap an element below)"
+    override val queryLabelRes = R.string.label_element_path
     override val helper by lazy { GetWidgetDataHelper(this) }
 }

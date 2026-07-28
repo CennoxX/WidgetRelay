@@ -7,7 +7,6 @@ import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProviderInfo
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 
 /**
  * App-wide singleton around [AppWidgetHost]. Widgets are bound by a persistent
@@ -77,20 +76,12 @@ class WidgetHost private constructor(private val context: Context) {
      * The result arrives in the activity's onActivityResult with [requestCode].
      */
     fun startConfigureForId(activity: Activity, appWidgetId: Int, requestCode: Int): Boolean {
-        val configure = getProviderInfoForId(appWidgetId)?.configure ?: return false
+        getProviderInfoForId(appWidgetId)?.configure ?: return false
 
         return try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                appWidgetHost.startAppWidgetConfigureActivityForResult(
-                    activity, appWidgetId, 0, requestCode, null
-                )
-            } else {
-                val intent = Intent(AppWidgetManager.ACTION_APPWIDGET_CONFIGURE).apply {
-                    component = configure
-                    putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-                }
-                activity.startActivityForResult(intent, requestCode)
-            }
+            appWidgetHost.startAppWidgetConfigureActivityForResult(
+                activity, appWidgetId, 0, requestCode, null
+            )
             true
         } catch (e: Exception) {
             e.printStackTrace()

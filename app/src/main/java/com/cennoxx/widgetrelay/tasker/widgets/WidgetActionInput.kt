@@ -1,5 +1,7 @@
 package com.cennoxx.widgetrelay.tasker.widgets
 
+import android.content.Context
+import com.cennoxx.widgetrelay.R
 import com.joaomgcd.taskerpluginlibrary.input.TaskerInputField
 import com.joaomgcd.taskerpluginlibrary.input.TaskerInputRoot
 
@@ -21,3 +23,14 @@ class WidgetActionInput @JvmOverloads constructor(
     @field:TaskerInputField("spany", labelResIdName = "height_cells", ignoreInStringBlurb = true) var spanY: Int = 2,
     @field:TaskerInputField("query", labelResIdName = "query", ignoreInStringBlurb = true) var query: String? = null
 )
+
+/**
+ * The app / widget / size header every action shows in its Tasker blurb.
+ * All input fields are marked `ignoreInStringBlurb`, so the blurbs are built
+ * by hand instead of being generated from the annotations.
+ */
+internal fun StringBuilder.appendWidgetBlurbHeader(context: Context, input: WidgetActionInput) {
+    appendLine(context.getString(R.string.app_line, input.appName))
+    appendLine(context.getString(R.string.widget_line, input.widgetLabel))
+    appendLine(context.getString(R.string.blurb_size, input.spanX, input.spanY))
+}

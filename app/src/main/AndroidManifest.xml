@@ -1,4 +1,4 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+﻿<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.BIND_APPWIDGET" />
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
@@ -16,7 +16,7 @@
             android:name=".tasker.widgets.ActivityConfigGetWidgetData"
             android:exported="true"
             android:icon="@mipmap/ic_launcher"
-            android:label="Get Widget Data"
+            android:label="@string/action_get_widget_data"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="com.twofortyfouram.locale.intent.action.EDIT_SETTING" />
@@ -27,7 +27,7 @@
             android:name=".tasker.widgets.ActivityConfigGetWidgetJson"
             android:exported="true"
             android:icon="@mipmap/ic_launcher"
-            android:label="Get Widget JSON"
+            android:label="@string/action_get_widget_json"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="com.twofortyfouram.locale.intent.action.EDIT_SETTING" />
@@ -38,7 +38,7 @@
             android:name=".tasker.widgets.ActivityConfigClickWidget"
             android:exported="true"
             android:icon="@mipmap/ic_launcher"
-            android:label="Click Widget Path"
+            android:label="@string/action_click_widget_path"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="com.twofortyfouram.locale.intent.action.EDIT_SETTING" />
@@ -49,7 +49,7 @@
             android:name=".tasker.widgets.ActivityConfigClickWidgetText"
             android:exported="true"
             android:icon="@mipmap/ic_launcher"
-            android:label="Click Widget Text"
+            android:label="@string/action_click_widget_text"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="com.twofortyfouram.locale.intent.action.EDIT_SETTING" />
@@ -59,7 +59,7 @@
         <activity
             android:name=".widget.ActivityWidgetSelector"
             android:exported="false"
-            android:label="Select Widget"
+            android:label="@string/select_widget"
             android:theme="@style/AppTheme.NoActionBar" />
 
     </application>
