@@ -1,0 +1,68 @@
+WidgetRelay
+Copyright (C) 2026 CennoxX
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License version 3, as published by the
+Free Software Foundation. See the LICENSE file for the full license text.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+
+===============================================================================
+Third-party components
+===============================================================================
+
+1. taskerpluginlibrary/
+-----------------------
+   The Tasker plugin library in the `taskerpluginlibrary` module is
+   Copyright (C) João Dias (joaomgcd) and contributors.
+
+   Source: https://github.com/joaomgcd/TaskerPluginSample
+   License: GNU General Public License version 3 (see LICENSE)
+
+   This repository is a fork of TaskerPluginSample. Because that project is
+   licensed under the GPL, WidgetRelay as a whole is distributed under the same
+   license.
+
+2. net/dinglisch/android/tasker/
+--------------------------------
+   `TaskerPlugin.java` and `TaskerIntent.java` are the Tasker plugin protocol
+   helper classes written by the author of Tasker (Pent / dinglisch) and are
+   included here as they were distributed with TaskerPluginSample.
+
+   Reference: https://tasker.joaoapps.com/plugins.html
+
+   These files are unmodified.
+
+
+===============================================================================
+Statement of changes (GPL-3.0 section 5a)
+===============================================================================
+
+The following changes were made to the original TaskerPluginSample project:
+
+* 2026-07-13: The sample application in the `:app` module was removed and
+  replaced with WidgetRelay, an entirely new application
+  (package `com.cennoxx.widgetrelay`). All code under
+  `app/src/main/java/com/cennoxx/` is original work and not derived from the
+  upstream sample.
+
+* 2026-07-13: `taskerpluginlibrary/build.gradle` - raised compileSdk from 34 to
+  37, removed the deprecated `targetSdkVersion`, raised Java source/target
+  compatibility from 17 to 21, and added `lint`, `testOptions` and
+  `kotlinOptions` blocks.
+
+* 2026-07-13: `taskerpluginlibrary/.../extensions/Public.kt` - replaced the
+  deprecated `toLowerCase()` call with `lowercase()`.
+
+* 2026-07-28: Removed upstream's Maven Central publishing setup
+  (`scripts/publish-mavencentral.gradle` and the corresponding `apply from:`
+  and `PUBLISH_*` properties in `taskerpluginlibrary/build.gradle`), as this
+  fork consumes the library locally and does not republish it.
+
+* 2026-07-28: Replaced upstream's README.md with documentation for WidgetRelay
+  and removed the `projectFilesBackup/` directory.
+
+No other files in the `taskerpluginlibrary` module have been modified.
