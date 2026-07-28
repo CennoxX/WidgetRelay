@@ -43,19 +43,7 @@ dependencies {
 repositories {
     mavenCentral()
 }
-ext {
-    PUBLISH_GROUP_ID = 'com.joaomgcd'
-    PUBLISH_VERSION = '0.4.10'
-    PUBLISH_ARTIFACT_ID = 'taskerpluginlibrary'
-}
-apply from: "${rootProject.projectDir}/scripts/publish-mavencentral.gradle"
 
-//to update:
-// - change build variants to release
-// - rebuild so that the the release aar for the plugin is generated from the latest code
-// - Run the "Publish To Maven Central" script
-// - Go to "https://s01.oss.sonatype.org/"
-// - Go to "Staging Repositories"
-// - Press the "Close" button and wait
-// - Press the "Release" button and wait
-// - Check if release is live in "Repositories"
+// Upstream's Maven Central publishing setup was removed in this fork - this
+// module is only consumed locally by :app. See NOTICE for the full list of
+// changes made to the vendored library.
