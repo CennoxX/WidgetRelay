@@ -106,12 +106,14 @@ object WidgetActionRuntime {
     /**
      * Must be called from a background thread (Tasker runners are).
      * Performs a click on the first element whose text or content description
-     * equals [text] (trimmed), firing the provider's PendingIntent.
+     * matches [query], firing the provider's PendingIntent. Parse [query] with
+     * [TextQuery.parse] first - a widget query never fails to bind because of
+     * a bad pattern, so that is reported separately from [ClickResult].
      */
-    fun clickText(context: Context, input: WidgetActionInput, text: String): ClickResult {
+    fun clickText(context: Context, input: WidgetActionInput, query: TextQuery): ClickResult {
         var result = ClickResult.NOT_FOUND
         val bound = withAttachedWidget(context, input) { hostView ->
-            val target = findViewByText(hostView, text.trim())
+            val target = findViewByText(hostView, query)
             if (target == null) {
                 false // collection content may still be loading - keep polling
             } else {
@@ -123,13 +125,13 @@ object WidgetActionRuntime {
     }
 
     /** Depth-first search for a view whose text or content description matches. */
-    private fun findViewByText(view: View, text: String): View? {
-        if (view is TextView && view.text?.toString()?.trim() == text) return view
-        if (view.contentDescription?.toString()?.trim() == text) return view
+    private fun findViewByText(view: View, query: TextQuery): View? {
+        if (view is TextView) view.text?.toString()?.let { if (query.matches(it)) return view }
+        view.contentDescription?.toString()?.let { if (query.matches(it)) return view }
         if (view is ViewGroup) {
             repeat(view.childCount) { index ->
                 view.getChildAt(index)?.let { child ->
-                    findViewByText(child, text)?.let { return it }
+                    findViewByText(child, query)?.let { return it }
                 }
             }
         }

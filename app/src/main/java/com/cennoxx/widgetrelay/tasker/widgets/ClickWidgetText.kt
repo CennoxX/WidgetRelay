@@ -15,8 +15,13 @@ private const val ERROR_NOT_BOUND = 1
 private const val ERROR_NOT_FOUND = 2
 private const val ERROR_NOT_CLICKABLE = 3
 private const val ERROR_NO_OVERLAY = 4
+private const val ERROR_INVALID_QUERY = 5
 
-/** Clicks the first widget element matching the given text, firing the provider's PendingIntent. */
+/**
+ * Clicks the first widget element matching the given text, firing the
+ * provider's PendingIntent. The text is either an exact match or, written as
+ * `/pattern/flags`, a regular expression - see [TextQuery].
+ */
 class ClickWidgetTextRunner : TaskerPluginRunnerActionNoOutput<WidgetActionInput>() {
     override fun run(context: Context, input: TaskerInput<WidgetActionInput>): TaskerPluginResult<Unit> {
         if (!WidgetActionRuntime.hasOverlayPermission(context)) {
@@ -24,7 +29,9 @@ class ClickWidgetTextRunner : TaskerPluginRunnerActionNoOutput<WidgetActionInput
         }
         val text = input.regular.query?.takeIf { it.isNotBlank() }
             ?: return TaskerPluginResultError(ERROR_NOT_FOUND, context.getString(R.string.error_no_text))
-        return when (WidgetActionRuntime.clickText(context, input.regular, text)) {
+        val query = TextQuery.parse(text.trim())
+            ?: return TaskerPluginResultError(ERROR_INVALID_QUERY, context.getString(R.string.error_text_invalid_regex, text))
+        return when (WidgetActionRuntime.clickText(context, input.regular, query)) {
             WidgetActionRuntime.ClickResult.NOT_BOUND -> {
                 WidgetRebindNotifier.notifyNotBound(
                     context, input.regular.appWidgetId, input.regular.widgetLabel, input.regular.appName
