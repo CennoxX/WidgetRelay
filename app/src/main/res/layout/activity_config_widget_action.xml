@@ -149,9 +149,9 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Extracted data (tap an element to select it):"
-            android:textStyle="bold"
-            android:textSize="14sp" />
+            android:text="Extracted data (tap an element below):"
+            android:textSize="14sp"
+            android:textStyle="bold" />
 
         <Button
             android:id="@+id/refreshButton"

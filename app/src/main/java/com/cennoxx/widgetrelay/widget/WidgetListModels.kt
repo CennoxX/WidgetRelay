@@ -17,13 +17,14 @@ fun AppWidgetProviderInfo.getSpans(context: Context): Pair<Int, Int> {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
         targetCellWidth > 1 && targetCellHeight > 1
     ) {
-        return targetCellWidth.coerceAtMost(5) to targetCellHeight.coerceAtMost(5)
+        return targetCellWidth.coerceAtMost(WidgetGrid.MAX_SPAN_X) to
+            targetCellHeight.coerceAtMost(WidgetGrid.MAX_SPAN_Y)
     }
     val density = context.resources.displayMetrics.density
     val widthDp = minWidth / density
     val heightDp = minHeight / density
-    val spanX = max(1, ceil((widthDp + 30) / 70.0).toInt()).coerceAtMost(5)
-    val spanY = max(1, ceil((heightDp + 30) / 70.0).toInt()).coerceAtMost(5)
+    val spanX = max(1, ceil((widthDp + 30) / 70.0).toInt()).coerceAtMost(WidgetGrid.MAX_SPAN_X)
+    val spanY = max(1, ceil((heightDp + 30) / 70.0).toInt()).coerceAtMost(WidgetGrid.MAX_SPAN_Y)
     return spanX to spanY
 }
 
