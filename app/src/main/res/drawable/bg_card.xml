@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Neutral translucent card: readable on both the light and the dark theme
+     without needing a second set of resources -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/cardFill" />
+    <stroke
+        android:width="1dp"
+        android:color="@color/cardStroke" />
+    <corners android:radius="12dp" />
+</shape>

@@ -5,6 +5,11 @@
     <!-- Invisible overlay window: widgets must be attached to a real window so
          their collection views (ListView etc.) load content at runtime -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!-- The widget monitor keeps widgets hosted for the "Widget Updated" event -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
         android:icon="@mipmap/ic_launcher"
@@ -17,17 +22,6 @@
             android:exported="true"
             android:icon="@mipmap/ic_launcher"
             android:label="@string/action_get_widget_data"
-            android:theme="@style/AppTheme.NoActionBar">
-            <intent-filter>
-                <action android:name="com.twofortyfouram.locale.intent.action.EDIT_SETTING" />
-            </intent-filter>
-        </activity>
-
-        <activity
-            android:name=".tasker.widgets.ActivityConfigGetWidgetJson"
-            android:exported="true"
-            android:icon="@mipmap/ic_launcher"
-            android:label="@string/action_get_widget_json"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="com.twofortyfouram.locale.intent.action.EDIT_SETTING" />
@@ -56,11 +50,57 @@
             </intent-filter>
         </activity>
 
+        <!-- Configured like the actions, but registered as an event: Tasker
+             lists a condition plugin under Event only if its config activity
+             handles ACTION_EDIT_EVENT. EDIT_CONDITION would make it a state. -->
+        <activity
+            android:name=".tasker.widgets.ActivityConfigWidgetUpdated"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher"
+            android:label="@string/event_widget_updated"
+            android:theme="@style/AppTheme.NoActionBar">
+            <intent-filter>
+                <action android:name="net.dinglisch.android.tasker.ACTION_EDIT_EVENT" />
+            </intent-filter>
+        </activity>
+
         <activity
             android:name=".widget.ActivityWidgetSelector"
             android:exported="false"
             android:label="@string/select_widget"
             android:theme="@style/AppTheme.NoActionBar" />
+
+        <!-- The only screen of the app itself: what is currently being monitored -->
+        <activity
+            android:name=".widget.ActivityWidgetMonitor"
+            android:exported="true"
+            android:label="@string/monitor_title"
+            android:launchMode="singleTop"
+            android:theme="@style/AppTheme.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name=".widget.WidgetMonitorService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="@string/monitor_fgs_explanation" />
+        </service>
+
+        <receiver
+            android:name=".widget.WidgetMonitorWatchdog"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="com.cennoxx.widgetrelay.WATCHDOG" />
+            </intent-filter>
+        </receiver>
 
     </application>
 </manifest>

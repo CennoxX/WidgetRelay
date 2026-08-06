@@ -9,13 +9,14 @@ Lots of apps show information in a widget that they expose nowhere else — no A
 no notification, no content provider. WidgetRelay hosts those widgets invisibly
 in the background, extracts their contents, and hands them to Tasker as plain
 text or JSON. It can also click elements inside them, so a widget button becomes
-something a task can trigger.
+something a task can trigger, and it can watch a widget and fire a Tasker event
+the moment its contents change.
 
 Typical uses:
 
 - Read a value that only exists in a widget (unread counts, a sensor reading,
   the next departure, a balance, "now playing")
-- Poll a widget on a schedule and act when the value changes
+- React the moment a widget changes, without polling
 - Press a widget's button from a task (refresh, play/pause, toggle)
 
 ---
@@ -23,6 +24,7 @@ Typical uses:
 ## Table of contents
 
 - [Actions](#actions)
+- [The event](#the-event)
 - [Requirements](#requirements)
 - [Setup](#setup)
 - [Building](#building)
@@ -35,16 +37,20 @@ Typical uses:
 
 ## Actions
 
-WidgetRelay registers four Tasker plugin actions. All of them are configured the
-same way: pick an app and widget, choose a size, and — for all but the JSON
-action — tap the element you want in the extracted-data list.
+WidgetRelay registers three Tasker plugin actions (and one
+[event](#the-event)). All of them are configured the same way: pick an app and
+widget, choose a size, and tap the element you want in the extracted-data list.
 
 | Action | Input | Output |
 | --- | --- | --- |
 | **Get Widget Data** | element path | `%widget_value` — the element's text, content description or resource id |
-| **Get Widget JSON** | — | `%widget_json` — the whole widget as a JSON tree |
+| **Get Widget Data** | *(empty path)* | `%widget_json` — the whole widget as a JSON tree |
 | **Click Widget Path** | element path | — |
 | **Click Widget Text** | element text | — |
+
+**Get Widget Data** covers both reading modes: give it an element path and it
+returns that one value, leave the path empty and it returns everything as JSON.
+The empty case is also slower on purpose — see [hack 3](#3-polling-because-there-is-no-widget-is-ready-callback).
 
 ### Addressing elements
 
@@ -60,8 +66,9 @@ input fields accept Tasker variables, so `%par1` or `%text` work too.
 
 ### JSON output
 
-**Get Widget JSON** returns the widget as a nested tree. `type` is the view
-class, `children` is only present when a node has any:
+With an empty element path, **Get Widget Data** returns the widget as a nested
+tree in `%widget_json`. `type` is the view class, `children` is only present
+when a node has any:
 
 ```json
 {
@@ -90,6 +97,47 @@ the JSON path support in newer Tasker versions.
 
 ---
 
+## The event
+
+**Widget Updated** is a Tasker *event* condition: it fires when a widget's
+contents change, instead of you polling one of the actions on a timer.
+
+Configure it like the actions — pick app, widget and size. The element path is
+**optional** here:
+
+- leave it empty and the event fires on *any* change in the widget
+- pick an element and it only fires when that element's value changes
+
+| Variable | Contents |
+| --- | --- |
+| `%widget_value` | the watched element's new value (empty if no element was picked) |
+| `%widget_old_value` | its value before the update |
+| `%widget_changed()` | Tasker array of the paths of every element that changed |
+| `%widget_json` | the whole widget as a JSON tree, same shape as Get Widget Data's |
+
+### Why this needs a running app
+
+An action can create a widget, read it and throw it away in the same second.
+An event cannot: something has to keep the widget alive and watch it. So saving
+a Widget Updated event registers its widget with the **widget monitor**, a
+foreground service that hosts every registered widget in a permanent invisible
+window and reports what changed.
+
+That is what the persistent notification is for, and it is also why the app now
+has a launcher icon: opening it shows the monitor screen with every widget
+currently being hosted, how many elements were read from it, how often it
+changed and when — plus the permissions background monitoring needs.
+
+Two things are worth knowing:
+
+- **Tasker never tells a plugin that an event was deleted.** Removing the event
+  in Tasker leaves its widget registered here. Remove it on the monitor screen
+  when you no longer want it hosted.
+- **The monitor is only as reliable as the system lets it be.** See
+  [hack 10](#10-staying-alive-for-the-event) for what it does about that.
+
+---
+
 ## Requirements
 
 - Android 6.0 (API 23) or newer
@@ -98,24 +146,32 @@ the JSON path support in newer Tasker versions.
   - **Bind widget** — a system dialog shown the first time you pick a widget
   - **Display over other apps** — needed so widgets load their contents while
     Tasker runs the action in the background ([why](#2-widgets-only-load-their-content-in-a-real-window))
+- For the **Widget Updated** event only: notifications (for the monitor's
+  ongoing notification) and, in practice, an exemption from battery
+  optimisation. Both are requested from the monitor screen.
 
-WidgetRelay has no launcher icon and no UI of its own — everything happens
-inside the Tasker action configuration screen.
+Apart from the monitor screen, WidgetRelay has no UI of its own — everything
+else happens inside the Tasker configuration screens.
 
 ## Setup
 
 1. Install WidgetRelay.
-2. In Tasker, add an action: **Plugin → WidgetRelay → _(pick one of the four)_**.
+2. In Tasker, add an action: **Plugin → WidgetRelay → _(pick one of the three)_**.
 3. The widget picker opens immediately. Search for the app or widget you want.
 4. Grant the widget bind permission when the system asks.
 5. Choose the widget size in cells. **This matters** — many widgets render a
    different layout at different sizes, so pick the size you actually want to
    read.
 6. Tap the element you want in the extracted-data list below the preview.
-   For the click actions, elements that can't be clicked are dimmed and can't be
-   selected.
+   Elements the chosen action probably can't use are dimmed, but stay
+   selectable — the extraction heuristics can be wrong.
 7. Save. On first save you'll be sent to Android's "Display over other apps"
    settings if that permission is still missing.
+
+For the **Widget Updated** event, add it as a Tasker *event* context
+(**Event → Plugin → WidgetRelay → Widget Updated**) instead of an action; the
+element path is optional there. After saving, open WidgetRelay once and grant
+the permissions it lists, so the monitor survives in the background.
 
 ## Building
 
@@ -167,17 +223,23 @@ app/src/main/java/com/cennoxx/widgetrelay/
 │   ├── WidgetExtractor.kt                walks the inflated view tree into WidgetNodes
 │   ├── WidgetNode.kt                     one extracted element
 │   ├── WidgetGrid.kt                     launcher cell geometry (see hack 6)
+│   ├── WidgetJson.kt                     nodes -> JSON tree / path-value map
 │   ├── WidgetListModels.kt               picker models + default span calculation
 │   ├── ActivityWidgetSelector.kt         searchable widget picker
-│   └── WidgetExpandableAdapter.kt        picker list, grouped by app
+│   ├── WidgetExpandableAdapter.kt        picker list, grouped by app
+│   ├── WidgetMonitorRegistry.kt          which widgets to keep hosted (persisted)
+│   ├── WidgetMonitorService.kt           hosts them, detects changes, fires events
+│   ├── WidgetMonitorWatchdog.kt          boot / update / alarm restarts
+│   └── ActivityWidgetMonitor.kt          the app's only screen: live monitor state
 └── tasker/widgets/
     ├── WidgetActionInput.kt              shared plugin input (widget id, size, query)
     ├── WidgetActionRuntime.kt            the runtime core: attach, poll, extract, click
     ├── ActivityConfigWidgetActionBase.kt shared configuration UI
-    ├── GetWidgetData.kt                  ─┐
-    ├── GetWidgetJson.kt                   │ the four actions:
+    ├── WidgetRebindNotifier.kt           tells the user when a binding was lost
+    ├── GetWidgetData.kt                  ─┐ the three actions:
     ├── ClickWidget.kt                     │ runner + config helper + config activity
-    └── ClickWidgetText.kt                ─┘
+    ├── ClickWidgetText.kt                ─┘
+    └── WidgetUpdated.kt                   the event: same shape, condition runner
 ```
 
 The flow is the same for every action:
@@ -186,6 +248,9 @@ The flow is the same for every action:
    the Tasker action. The binding is persistent, so it survives reboots.
 2. At **run** time the runner recreates that widget off-screen, waits for the
    provider to deliver its `RemoteViews`, and then reads or clicks the view tree.
+
+The event inverts step 2: instead of re-creating the widget per run, the monitor
+service keeps it created and pushes to Tasker when it changes.
 
 ---
 
@@ -241,12 +306,17 @@ collection rows arrive later still. So the runtime polls the tree every 100 ms
 starting 50 ms after attaching, up to an 8 s timeout, with two different exit
 conditions:
 
-- **Path and text actions** stop the moment the element they need exists. That
-  usually happens on the first or second poll, so those actions are fast.
-- **Get Widget JSON** needs everything, so it waits for the tree to *settle*:
-  unchanged for 500 ms, and never finishing earlier than 800 ms after attach.
-  Without that lower bound, two identical polls taken before a list service has
-  even connected would look "stable" and the capture would come back empty.
+- **Anything addressing one element** — the click actions, and Get Widget Data
+  with a path — stops the moment that element exists. That usually happens on
+  the first or second poll, so those runs are fast.
+- **Get Widget Data without a path** needs everything, so it waits for the tree
+  to *settle*: unchanged for 500 ms, and never finishing earlier than 800 ms
+  after attach. Without that lower bound, two identical polls taken before a
+  list service has even connected would look "stable" and the capture would
+  come back empty.
+
+This is why the same action behaves so differently with and without a path:
+they are two capture strategies, not two output formats.
 
 *(`WidgetActionRuntime.captureNodes()`)*
 
@@ -311,8 +381,106 @@ description are the only things a widget reliably exposes to a host.
 
 *(`WidgetExtractor.kt`)*
 
-### 9. Small ones
+### 9. Noticing that a widget changed
 
+There is no "widget changed" callback anywhere in the AppWidget APIs — a host
+is a renderer, not an observer. The only moment the system tells a host
+anything is when it hands it new `RemoteViews` to draw, so
+`AppWidgetHostView.updateAppWidget()` is overridden and that call *becomes* the
+change signal (`NotifyingWidgetHostView`, installed via `AppWidgetHost.onCreateView`).
+
+That covers ordinary updates but not collections: `notifyAppWidgetViewDataChanged`
+goes straight to the `RemoteViewsService` and never reaches the host view, so a
+list can quietly repopulate with no signal at all. A slow re-capture every 15 s
+runs alongside the push signal to catch those.
+
+Both paths end in the same place: extract the tree, flatten it to a
+`path -> value` map, and compare it with the previous one. That map is the
+change fingerprint — it is small, cheap to diff, and diffing it says not just
+*that* something changed but *which element* did, which is what lets one event
+watch a single value while ignoring the rest of the widget.
+
+Matching happens in the runner, not the service: the service just tells Tasker
+"widget 42 changed, here is the before and after", and every enabled instance
+of the event decides for itself whether it cares. That is the only shape that
+works, because a plugin cannot enumerate its own events.
+
+One trap worth knowing if you build on this: an `AppWidgetHost` keeps exactly
+**one view per appWidgetId**. Creating a second view for an id — which every
+plugin action and every config preview does — replaces the monitor's view in
+that map, and the replaced view never receives an update again. Nothing fails
+visibly; the event just stops firing. So both of those paths tell the monitor to
+re-create its view when they are done with it.
+
+That handshake is not enough on its own, though, and assuming it was is worth a
+paragraph of its own. A displaced view keeps sitting in its overlay window
+rendering its last known state, so every health signal still looks green — the
+service runs, the notification counts the widget, this app's own screen says
+"Loaded and watching" — while the event is dead for good. And the handshake can
+be missed: a background service start refused under Android 12+ limits, a config
+activity killed before `onDestroy`, a crash in between. One missed handshake and
+monitoring is over until something restarts the service.
+
+So the monitor does not trust it. `WidgetHost` tracks which view is current for
+each id, and every recapture tick asks whether the monitor still owns its
+widget — plus whether its window is even still attached. Either answer being no
+re-creates the view on the spot, carrying the change baseline over so the update
+that arrived while it was orphaned is still reported. The same check runs on
+sync, so opening this app repairs a stuck widget immediately instead of waiting
+for the tick.
+
+The lesson generalises: a flag that records *that you once succeeded* is not a
+health check. `attached` was set at `addView()` and only ever cleared by our own
+teardown, so it could never have caught this.
+
+*(`WidgetMonitorService`, `WidgetUpdated.kt`, `WidgetJson.kt`)*
+
+### 10. Staying alive for the event
+
+The actions are stateless, so nothing had to survive between runs. The event
+does, and Android spends a lot of effort stopping exactly that. What it does
+about it, roughly in order of how much it matters:
+
+- A **foreground service** with an ongoing notification, typed `specialUse` on
+  Android 14+. Without this the process is killed within minutes.
+- The **invisible overlay windows stay attached** for the whole time, instead of
+  being added and removed per run. That is what keeps providers pushing updates
+  and collection views connected — and it means the event needs the overlay
+  permission just as much as the actions do.
+- `START_STICKY` plus an `onTaskRemoved` restart, so swiping the app away or a
+  low-memory kill comes back.
+- A receiver for `BOOT_COMPLETED` and `MY_PACKAGE_REPLACED`, since both wipe the
+  service and the alarm.
+- A repeating **watchdog alarm** every 15 minutes as a heartbeat, in case a kill
+  went unnoticed. Deliberately inexact — it is a safety net, not the update
+  mechanism.
+- The **condition query**, but only partly. The runner restarts the service and
+  re-registers the widget when it is called — except the plugin library answers
+  event queries that carry no pass-through id without ever reaching the runner,
+  and those are exactly the ones Tasker sends on profile enable. So this repairs
+  a lost registry entry while events still flow; it cannot resurrect a dead
+  service, because a dead service sends no events and therefore triggers no
+  queries. The watchdog alarm is the real safety net.
+- An opt-in **partial wake lock**, off by default. Doze suspends the monitor
+  along with the CPU, so without it updates during deep sleep are only noticed
+  when the device wakes anyway. With it they are caught immediately, at a real
+  battery cost — hence the toggle rather than a default.
+- The monitor screen asks for an **exemption from battery optimisation**, which in
+  practice matters more than everything above on aggressive OEM ROMs.
+
+None of this is a guarantee. A sufficiently determined vendor ROM will still
+kill the service; the monitor screen exists partly so you can see whether it is
+actually running.
+
+*(`WidgetMonitorService`, `WidgetMonitorWatchdog`, `ActivityWidgetMonitor`)*
+
+### 11. Small ones
+
+- **Events and states are told apart by the intent filter alone.** A condition
+  plugin whose config activity handles `EDIT_CONDITION` is a *state*; only
+  Tasker's own `net.dinglisch.android.tasker.ACTION_EDIT_EVENT` makes it show up
+  under **Event**. There is no error either way — declare the wrong one and the
+  plugin simply appears in the wrong list, or in neither.
 - The configuration screen opens the widget picker **immediately** when adding a
   new action, so there's no empty config screen flashing past first.
 - Tasker's generated action blurbs are disabled for every input field
@@ -331,16 +499,35 @@ description are the only things a widget reliably exposes to a host.
   click comes from the background.
 - **Timing.** A widget that needs longer than 8 s to deliver its content will
   time out; a list that delivers its first rows more than 500 ms after the static
-  layout can still be captured empty by the JSON action. Both bounds are
-  constants at the top of `WidgetActionRuntime.kt`.
+  layout can still be captured empty by a path-less Get Widget Data. Both
+  bounds are constants at the top of `WidgetActionRuntime.kt`.
+- **Uninstalls break widget bindings.** The system deletes a host's widget
+  bindings when the app is uninstalled — replacing it with a differently signed
+  build (debug vs. release) counts, normal updates don't. Actions store the
+  widget's provider too, so reopening the action binds the same widget again
+  automatically; just save it once more. Actions saved by versions that didn't
+  store the provider yet have to be reconfigured once by hand. If an action
+  *runs* against a lost binding, WidgetRelay posts a notification saying so —
+  tapping it opens Tasker, since there is no API to jump straight to one
+  action's edit screen; open that action and tap Save to rebind it.
 - **Paths are brittle.** Widgets that rearrange their layout invalidate stored
   paths. Use Click Widget Text where possible.
-- **One element per read.** Get Widget Data returns a single value; use Get
-  Widget JSON if you need several.
-- **No conditions or events.** WidgetRelay only provides actions — polling with a
-  Tasker profile is the way to react to changes.
-- Widgets are re-created on every run, so this is not free: expect a run to take
-  a few hundred milliseconds.
+- **One element per read.** Get Widget Data with a path returns a single value;
+  leave the path empty and parse `%widget_json` if you need several.
+- **The event needs the app running.** A monitored widget is hosted
+  continuously, which costs battery and a permanent notification, and the
+  service can still be killed by aggressive power management — see
+  [hack 10](#10-staying-alive-for-the-event). If you only need to check
+  something occasionally, polling Get Widget Data on a timer is the more robust
+  choice.
+- **Deleted events are not noticed.** Tasker doesn't tell plugins when an event
+  is removed, so its widget stays monitored until you remove it on the monitor
+  screen.
+- **Collection changes are found within ~15 s**, not instantly — they arrive
+  through a path that never reaches the host view (hack 9). Ordinary widget
+  updates are immediate.
+- Widgets are re-created on every action run, so actions are not free: expect a
+  run to take a few hundred milliseconds.
 
 ---
 

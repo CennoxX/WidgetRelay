@@ -3,4 +3,14 @@
     <color name="colorPrimary">#2563EB</color>
     <color name="colorPrimaryDark">#1E40AF</color>
     <color name="colorAccent">#10B981</color>
+
+    <!-- Monitor state -->
+    <color name="stateOk">#16A34A</color>
+    <color name="stateWarn">#D97706</color>
+    <color name="stateError">#DC2626</color>
+    <color name="stateOff">#9CA3AF</color>
+
+    <!-- Cards: grey with alpha, so one value works on light and dark -->
+    <color name="cardFill">#14808080</color>
+    <color name="cardStroke">#33808080</color>
 </resources>

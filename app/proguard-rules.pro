@@ -9,6 +9,10 @@
     @com.joaomgcd.taskerpluginlibrary.input.TaskerInputField <fields>;
 }
 -keep @com.joaomgcd.taskerpluginlibrary.input.TaskerInputRoot public class *
+# Input and condition-update classes are created reflectively via newInstance()
+-keepclassmembers @com.joaomgcd.taskerpluginlibrary.input.TaskerInputRoot class * {
+    <init>();
+}
 -keep @com.joaomgcd.taskerpluginlibrary.input.TaskerInputObject public class *
 -keep @com.joaomgcd.taskerpluginlibrary.output.TaskerOutputObject public class *
 -keepclassmembers class * {
