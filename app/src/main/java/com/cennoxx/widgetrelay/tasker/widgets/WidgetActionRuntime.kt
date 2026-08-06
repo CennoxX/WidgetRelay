@@ -19,6 +19,7 @@ import android.widget.TextView
 import com.cennoxx.widgetrelay.widget.WidgetExtractor
 import com.cennoxx.widgetrelay.widget.WidgetGrid
 import com.cennoxx.widgetrelay.widget.WidgetHost
+import com.cennoxx.widgetrelay.widget.WidgetMonitorService
 import com.cennoxx.widgetrelay.widget.WidgetNode
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -200,11 +201,15 @@ object WidgetActionRuntime {
         }
 
         latch.await(TIMEOUT_MS + 2000, TimeUnit.MILLISECONDS)
+        // Creating a view for this id displaced the one the monitor holds (an
+        // AppWidgetHost keeps only one view per id), so give it back - without
+        // this, running an action on a widget silently kills its update event
+        if (bound) WidgetMonitorService.rebuild(context, input.appWidgetId)
         return bound
     }
 
     /** A zero-alpha, non-interactive window sized like a widget on the home screen. */
-    private fun invisibleOverlayParams(context: Context, spanX: Int, spanY: Int): WindowManager.LayoutParams {
+    fun invisibleOverlayParams(context: Context, spanX: Int, spanY: Int): WindowManager.LayoutParams {
         val (widthPx, heightPx) = WidgetGrid.sizePx(context, spanX, spanY)
         val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY

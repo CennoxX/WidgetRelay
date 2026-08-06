@@ -3,10 +3,13 @@ package com.cennoxx.widgetrelay.tasker.widgets
 import android.app.Activity
 import android.appwidget.AppWidgetHostView
 import android.appwidget.AppWidgetProviderInfo
+import android.content.ComponentName
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -26,6 +29,8 @@ import com.cennoxx.widgetrelay.widget.ActivityWidgetSelector
 import com.cennoxx.widgetrelay.widget.WidgetExtractor
 import com.cennoxx.widgetrelay.widget.WidgetGrid
 import com.cennoxx.widgetrelay.widget.WidgetHost
+import com.cennoxx.widgetrelay.widget.WidgetMonitorRegistry
+import com.cennoxx.widgetrelay.widget.WidgetMonitorService
 import com.cennoxx.widgetrelay.widget.WidgetNode
 import com.cennoxx.widgetrelay.widget.getSpans
 import com.joaomgcd.taskerpluginlibrary.TaskerPluginConstants
@@ -47,11 +52,21 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
     protected open val queryLabelRes: Int? = null
     protected abstract val helper: TaskerPluginConfigHelper<WidgetActionInput, *, *>
 
+    /** Whether the query field has to be filled in before saving. */
+    protected open val queryRequired = true
+
     /** What tapping an element in the extracted-data list puts into the query field. */
     protected open fun queryValueForNode(node: WidgetNode): String? = node.pathInTree
 
-    /** Elements that aren't selectable are shown dimmed and can't be tapped. */
+    /** Called with the final input just before it is handed back to Tasker. */
+    protected open fun onSavingForTasker(input: WidgetActionInput) {}
+
+    /** Elements that aren't selectable are shown dimmed, but can still be tapped. */
     protected open fun isNodeSelectable(node: WidgetNode) = queryValueForNode(node) != null
+
+    /** Describes what makes a node selectable, e.g. "clickable" - shown in the status line. */
+    @get:StringRes
+    protected open val selectableDescriptionRes = R.string.selectable_with_value
 
     override val context get() = applicationContext
 
@@ -62,6 +77,7 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
     private lateinit var spanYSpinner: Spinner
     private lateinit var previewFrame: FrameLayout
     private lateinit var queryEditText: EditText
+    private lateinit var queryClearButton: TextView
     private lateinit var statusText: TextView
     private lateinit var nodesListView: ListView
 
@@ -108,10 +124,12 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
         spanYSpinner = findViewById(R.id.spanYSpinner)
         previewFrame = findViewById(R.id.previewFrame)
         queryEditText = findViewById(R.id.queryEditText)
+        queryClearButton = findViewById(R.id.queryClearButton)
         statusText = findViewById(R.id.statusText)
         nodesListView = findViewById(R.id.nodesListView)
 
         setupSizeSpinners()
+        setupQueryClearButton()
 
         val labelRes = queryLabelRes
         if (labelRes != null) {
@@ -127,9 +145,20 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
         }
         findViewById<Button>(R.id.changeWidgetButton).setOnClickListener { launchWidgetPicker() }
         findViewById<Button>(R.id.refreshButton).setOnClickListener {
-            if (boundWidgetId != -1) showWidget() else statusText.text = "Select a widget first."
+            if (boundWidgetId != -1) showWidget() else statusText.setText(R.string.status_select_widget_first)
         }
         findViewById<Button>(R.id.saveButton).setOnClickListener { save() }
+    }
+
+    private fun setupQueryClearButton() {
+        queryClearButton.setOnClickListener { queryEditText.text.clear() }
+        queryEditText.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
+                queryClearButton.visibility = if (s.isNotEmpty()) View.VISIBLE else View.GONE
+            }
+            override fun afterTextChanged(s: Editable) {}
+        })
     }
 
     private fun setupSizeSpinners() {
@@ -288,16 +317,16 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
             statusText.text = if (selectable == currentNodes.size) {
                 getString(R.string.status_elements, currentNodes.size)
             } else {
-                getString(R.string.status_elements_selectable, currentNodes.size, selectable)
+                getString(
+                    R.string.status_elements_selectable,
+                    currentNodes.size,
+                    selectable,
+                    getString(selectableDescriptionRes)
+                )
             }
             nodesListView.adapter = object : ArrayAdapter<WidgetNode>(
                 this, android.R.layout.simple_list_item_2, android.R.id.text1, currentNodes
             ) {
-                override fun areAllItemsEnabled() = false
-
-                override fun isEnabled(position: Int) =
-                    currentNodes.getOrNull(position)?.let { isNodeSelectable(it) } ?: false
-
                 override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
                     val view = super.getView(position, convertView, parent)
                     val node = currentNodes[position]
@@ -305,8 +334,10 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
                         node.bestValue ?: node.className
                     view.findViewById<TextView>(android.R.id.text2).text =
                         "${node.pathInTree} (${node.className})"
-                    // Dim what can't be selected - isEnabled() alone isn't visible
-                    view.alpha = if (isEnabled(position)) 1f else 0.4f
+                    // Dim elements the action likely can't use, but leave them
+                    // tappable - the extraction heuristics can be wrong, and the
+                    // action itself gives the real error if the pick was bad
+                    view.alpha = if (isNodeSelectable(node)) 1f else 0.4f
                     return view
                 }
             }
@@ -341,7 +372,9 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
                 widgetLabel = currentWidgetName,
                 spanX = selectedSpanX(),
                 spanY = selectedSpanY(),
-                query = queryEditText.text?.toString()?.takeIf { it.isNotBlank() }
+                query = queryEditText.text?.toString()?.takeIf { it.isNotBlank() },
+                // Stored so the widget can be rebound if the id dies (reinstall)
+                provider = widgetHost.getProviderInfoForId(boundWidgetId)?.provider?.flattenToString()
             )
         )
 
@@ -367,6 +400,43 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
             widgetNameText.text = getString(R.string.widget_line, currentWidgetName)
             // Wait for the layout pass so the preview frame has a width
             previewFrame.post { showWidget() }
+        } else if (regular.appWidgetId != -1) {
+            rebindLostWidget(regular)
+        }
+    }
+
+    /**
+     * The system deletes all of a host's widget bindings when the app is
+     * uninstalled (a reinstall with a different signature - e.g. switching
+     * between debug and release builds - counts), so a stored appWidgetId can
+     * be dead although the Tasker action is intact. The provider is stored
+     * too, so the same widget can be bound to a fresh id, keeping the
+     * configured element and size.
+     */
+    private fun rebindLostWidget(regular: WidgetActionInput) {
+        val provider = regular.provider?.let { ComponentName.unflattenFromString(it) }
+        val info = provider?.let { p ->
+            widgetHost.getAvailableWidgetProviders().firstOrNull { it.provider == p }
+        }
+        if (info == null) {
+            // Saved before the provider was stored, or the widget's app is gone
+            statusText.setText(R.string.status_rebind_failed)
+            return
+        }
+
+        statusText.setText(R.string.status_rebinding)
+        boundWidgetId = widgetHost.allocateId()
+        val (appName, widgetName) = getAppAndWidgetNames(info)
+        currentAppName = regular.appName ?: appName
+        currentWidgetName = regular.widgetLabel ?: widgetName
+        appNameText.text = getString(R.string.app_line, currentAppName)
+        widgetNameText.text = getString(R.string.widget_line, currentWidgetName)
+
+        if (widgetHost.bindId(boundWidgetId, info)) {
+            onWidgetBound()
+        } else {
+            statusText.setText(R.string.status_requesting_permission)
+            startActivityForResult(widgetHost.getBindIntentForId(boundWidgetId, info), REQUEST_BIND)
         }
     }
 
@@ -375,7 +445,7 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
             Toast.makeText(this, R.string.toast_select_widget, Toast.LENGTH_SHORT).show()
             return
         }
-        if (queryLabelRes != null && queryEditText.text.isNullOrBlank()) {
+        if (queryLabelRes != null && queryRequired && queryEditText.text.isNullOrBlank()) {
             Toast.makeText(this, R.string.toast_select_element, Toast.LENGTH_SHORT).show()
             return
         }
@@ -391,8 +461,11 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
         // A newly bound widget replaces the one from the previous configuration
         if (savedWidgetId != -1 && savedWidgetId != boundWidgetId) {
             widgetHost.deleteId(savedWidgetId)
+            // Nothing can be hosted for an id that no longer exists
+            WidgetMonitorRegistry.remove(this, savedWidgetId)
         }
         saved = true
+        onSavingForTasker(inputForTasker.regular)
         helper.finishForTasker()
     }
 
@@ -401,6 +474,11 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
         // Config abandoned: release the widget bound in this session
         if (!saved && boundWidgetId != -1 && boundWidgetId != savedWidgetId) {
             widgetHost.deleteId(boundWidgetId)
+        }
+        // The preview took over the host's view for this id - hand it back to
+        // the monitor, which would otherwise stop receiving updates
+        if (boundWidgetId != -1) {
+            WidgetMonitorService.rebuild(this, boundWidgetId)
         }
     }
 

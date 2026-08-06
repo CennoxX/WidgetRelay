@@ -25,10 +25,15 @@ class ClickWidgetRunner : TaskerPluginRunnerActionNoOutput<WidgetActionInput>() 
         val path = input.regular.query?.takeIf { it.isNotBlank() }
             ?: return TaskerPluginResultError(ERROR_NOT_FOUND, context.getString(R.string.error_no_path))
         return when (WidgetActionRuntime.clickPath(context, input.regular, path)) {
-            WidgetActionRuntime.ClickResult.NOT_BOUND -> TaskerPluginResultError(
-                ERROR_NOT_BOUND,
-                context.getString(R.string.error_not_bound, input.regular.widgetLabel ?: input.regular.appWidgetId)
-            )
+            WidgetActionRuntime.ClickResult.NOT_BOUND -> {
+                WidgetRebindNotifier.notifyNotBound(
+                    context, input.regular.appWidgetId, input.regular.widgetLabel, input.regular.appName
+                )
+                TaskerPluginResultError(
+                    ERROR_NOT_BOUND,
+                    context.getString(R.string.error_not_bound, input.regular.widgetLabel ?: input.regular.appWidgetId)
+                )
+            }
             WidgetActionRuntime.ClickResult.NOT_FOUND -> TaskerPluginResultError(
                 ERROR_NOT_FOUND,
                 context.getString(R.string.error_path_not_found, path)
@@ -61,5 +66,6 @@ class ClickWidgetHelper(config: TaskerPluginConfig<WidgetActionInput>) :
 class ActivityConfigClickWidget : ActivityConfigWidgetActionBase() {
     override val queryLabelRes = R.string.label_element_path
     override fun isNodeSelectable(node: WidgetNode) = node.clickable
+    override val selectableDescriptionRes = R.string.selectable_clickable
     override val helper by lazy { ClickWidgetHelper(this) }
 }

@@ -25,10 +25,15 @@ class ClickWidgetTextRunner : TaskerPluginRunnerActionNoOutput<WidgetActionInput
         val text = input.regular.query?.takeIf { it.isNotBlank() }
             ?: return TaskerPluginResultError(ERROR_NOT_FOUND, context.getString(R.string.error_no_text))
         return when (WidgetActionRuntime.clickText(context, input.regular, text)) {
-            WidgetActionRuntime.ClickResult.NOT_BOUND -> TaskerPluginResultError(
-                ERROR_NOT_BOUND,
-                context.getString(R.string.error_not_bound, input.regular.widgetLabel ?: input.regular.appWidgetId)
-            )
+            WidgetActionRuntime.ClickResult.NOT_BOUND -> {
+                WidgetRebindNotifier.notifyNotBound(
+                    context, input.regular.appWidgetId, input.regular.widgetLabel, input.regular.appName
+                )
+                TaskerPluginResultError(
+                    ERROR_NOT_BOUND,
+                    context.getString(R.string.error_not_bound, input.regular.widgetLabel ?: input.regular.appWidgetId)
+                )
+            }
             WidgetActionRuntime.ClickResult.NOT_FOUND -> TaskerPluginResultError(
                 ERROR_NOT_FOUND,
                 context.getString(R.string.error_text_not_found, text)
@@ -62,5 +67,6 @@ class ActivityConfigClickWidgetText : ActivityConfigWidgetActionBase() {
     override val queryLabelRes = R.string.label_element_text
     override fun queryValueForNode(node: WidgetNode) = node.text ?: node.contentDescription
     override fun isNodeSelectable(node: WidgetNode) = node.clickable && super.isNodeSelectable(node)
+    override val selectableDescriptionRes = R.string.selectable_clickable_with_text
     override val helper by lazy { ClickWidgetTextHelper(this) }
 }
