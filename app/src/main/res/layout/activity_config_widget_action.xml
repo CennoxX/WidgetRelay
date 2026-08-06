@@ -101,13 +101,32 @@
             android:textSize="14sp"
             android:layout_marginBottom="4dp" />
 
-        <EditText
-            android:id="@+id/queryEditText"
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="text"
-            android:padding="12dp"
-            android:layout_marginBottom="8dp" />
+            android:layout_marginBottom="8dp">
+
+            <EditText
+                android:id="@+id/queryEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text"
+                android:paddingStart="12dp"
+                android:paddingEnd="48dp"
+                android:paddingTop="12dp"
+                android:paddingBottom="12dp" />
+
+            <TextView
+                android:id="@+id/queryClearButton"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="end|center_vertical"
+                android:gravity="center"
+                android:text="✕"
+                android:textSize="16sp"
+                android:visibility="gone" />
+
+        </FrameLayout>
 
     </LinearLayout>
 

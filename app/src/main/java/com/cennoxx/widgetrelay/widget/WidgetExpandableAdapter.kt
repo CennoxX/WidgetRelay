@@ -14,6 +14,10 @@ class WidgetExpandableAdapter(private val context: Context) : BaseExpandableList
     private var apps: List<AppWithWidgets> = emptyList()
     private val inflater = LayoutInflater.from(context)
 
+    /** Size for the app-icon fallback, matching the app icon used elsewhere in this list. */
+    private val iconFallbackSizePx =
+        (56 * context.resources.displayMetrics.density).toInt()
+
     fun setData(apps: List<AppWithWidgets>) {
         this.apps = apps
         notifyDataSetChanged()
@@ -70,12 +74,31 @@ class WidgetExpandableAdapter(private val context: Context) : BaseExpandableList
             descriptionView.text = widget.description
         }
 
+        // Not every widget ships a preview image - fall back to the app's icon
+        // rather than leaving a blank gap where the preview would be
         val previewView = view.findViewById<ImageView>(R.id.widgetPreview)
-        if (widget.preview != null) {
-            previewView.visibility = View.VISIBLE
-            previewView.setImageDrawable(widget.preview)
-        } else {
-            previewView.visibility = View.GONE
+        val fallbackIcon = apps[groupPosition].icon
+        when {
+            widget.preview != null -> {
+                previewView.visibility = View.VISIBLE
+                // A recycled row may have been sized for the icon fallback below
+                previewView.layoutParams = previewView.layoutParams.apply {
+                    width = ViewGroup.LayoutParams.WRAP_CONTENT
+                    height = ViewGroup.LayoutParams.WRAP_CONTENT
+                }
+                previewView.setImageDrawable(widget.preview)
+            }
+            fallbackIcon != null -> {
+                previewView.visibility = View.VISIBLE
+                // The icon has no widget aspect ratio to preserve - a fixed
+                // size keeps it from ballooning to its full source resolution
+                previewView.layoutParams = previewView.layoutParams.apply {
+                    width = iconFallbackSizePx
+                    height = iconFallbackSizePx
+                }
+                previewView.setImageDrawable(fallbackIcon)
+            }
+            else -> previewView.visibility = View.GONE
         }
 
         return view
