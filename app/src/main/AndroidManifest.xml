@@ -50,6 +50,30 @@
             </intent-filter>
         </activity>
 
+        <!-- Settings actions: these control the widget monitor rather than
+             reading a widget, so they use their own simple config screen -->
+        <activity
+            android:name=".tasker.widgets.ActivityConfigPauseWatching"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher"
+            android:label="@string/action_pause_watching"
+            android:theme="@style/AppTheme.NoActionBar">
+            <intent-filter>
+                <action android:name="com.twofortyfouram.locale.intent.action.EDIT_SETTING" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".tasker.widgets.ActivityConfigKeepCpuAwake"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher"
+            android:label="@string/action_keep_cpu_awake"
+            android:theme="@style/AppTheme.NoActionBar">
+            <intent-filter>
+                <action android:name="com.twofortyfouram.locale.intent.action.EDIT_SETTING" />
+            </intent-filter>
+        </activity>
+
         <!-- Configured like the actions, but registered as an event: Tasker
              lists a condition plugin under Event only if its config activity
              handles ACTION_EDIT_EVENT. EDIT_CONDITION would make it a state. -->

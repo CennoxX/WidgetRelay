@@ -138,8 +138,7 @@ class ActivityWidgetMonitor : Activity() {
         toggleButton.setOnClickListener { toggleMonitoring() }
         wakeLockCheckBox.setOnCheckedChangeListener { _, checked ->
             if (checked == WidgetMonitorRegistry.usesWakeLock(this)) return@setOnCheckedChangeListener
-            WidgetMonitorRegistry.setUsesWakeLock(this, checked)
-            WidgetMonitorService.ensureRunning(this)
+            WidgetMonitorService.setWakeLockEnabled(this, checked)
         }
     }
 
@@ -365,15 +364,7 @@ class ActivityWidgetMonitor : Activity() {
     // --- Keeping the monitor alive ---
 
     private fun toggleMonitoring() {
-        val enabled = !WidgetMonitorRegistry.isEnabled(this)
-        WidgetMonitorRegistry.setEnabled(this, enabled)
-        if (enabled) {
-            WidgetMonitorWatchdog.schedule(this)
-            WidgetMonitorService.ensureRunning(this)
-        } else {
-            WidgetMonitorWatchdog.cancel(this)
-            WidgetMonitorService.stop(this)
-        }
+        WidgetMonitorService.setMonitoringEnabled(this, !WidgetMonitorRegistry.isEnabled(this))
         render()
     }
 

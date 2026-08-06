@@ -531,5 +531,27 @@ class WidgetMonitorService : Service() {
             app.stopService(Intent(app, WidgetMonitorService::class.java))
             statuses = emptyList()
         }
+
+        /**
+         * Turns watching on or off, including the pieces that outlive the
+         * service itself (the watchdog alarm). Shared by the monitor screen
+         * and the Tasker action so the two can't drift apart.
+         */
+        fun setMonitoringEnabled(context: Context, enabled: Boolean) {
+            WidgetMonitorRegistry.setEnabled(context, enabled)
+            if (enabled) {
+                WidgetMonitorWatchdog.schedule(context)
+                ensureRunning(context)
+            } else {
+                WidgetMonitorWatchdog.cancel(context)
+                stop(context)
+            }
+        }
+
+        /** The wake lock is applied on the next sync, so ask for one. */
+        fun setWakeLockEnabled(context: Context, enabled: Boolean) {
+            WidgetMonitorRegistry.setUsesWakeLock(context, enabled)
+            ensureRunning(context)
+        }
     }
 }

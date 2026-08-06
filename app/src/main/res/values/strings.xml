@@ -5,6 +5,8 @@
     <string name="action_get_widget_data">Get Widget Data</string>
     <string name="action_click_widget_path">Click Widget Path</string>
     <string name="action_click_widget_text">Click Widget Text</string>
+    <string name="action_pause_watching">Pause Watching Widgets</string>
+    <string name="action_keep_cpu_awake">Keep the CPU Awake</string>
 
     <!-- Tasker event labels -->
     <string name="event_widget_updated">Widget Updated</string>
@@ -22,6 +24,22 @@
     <string name="widget_old_value_description">The value of the selected widget element before the update</string>
     <string name="widget_changed">Changed Elements</string>
     <string name="widget_changed_description">Array of the paths of all elements that changed in this update</string>
+
+    <string name="widget_setting_state">New State</string>
+    <string name="widget_setting_state_description">The state the setting was left in (true or false), useful after a toggle</string>
+
+    <!-- Settings actions (pause watching / keep the CPU awake) -->
+    <string name="setting_mode_label">State</string>
+    <string name="setting_variable_label">Or a Tasker variable</string>
+    <string name="setting_variable_hint">%my_state</string>
+    <string name="setting_variable_hint_long">Overrides the choice above when filled in. Accepts on/off/toggle, true/false, yes/no or 1/0.</string>
+    <string name="mode_on">On</string>
+    <string name="mode_off">Off</string>
+    <string name="mode_toggle">Toggle</string>
+    <string name="mode_pause">Pause</string>
+    <string name="mode_resume">Resume</string>
+    <string name="setting_pause_description">Pauses the widget monitor. While paused, watched widgets are not loaded in the background and \'Widget Updated\' events do not fire. The list of watched widgets is kept, so resuming picks them all up again.</string>
+    <string name="setting_wake_lock_description">Keeps the CPU awake so widget changes are noticed while the screen is off and the device is in Doze. Costs noticeably more battery - a task can switch it on only for the hours you actually need it.</string>
 
     <!-- Action configuration screen -->
     <string name="label_element_path">Element path (tap an element below)</string>
@@ -63,6 +81,14 @@
     <string name="blurb_click_text">Click element with text \'%1$s\' of widget \'%2$s\' from app \'%3$s\'</string>
     <string name="blurb_updated_element">When \'%1$s\' of widget \'%2$s\' from app \'%3$s\' changes</string>
     <string name="blurb_updated_any">When anything in widget \'%1$s\' from app \'%2$s\' changes</string>
+    <string name="blurb_pause_on">Pause watching widgets</string>
+    <string name="blurb_pause_off">Resume watching widgets</string>
+    <string name="blurb_pause_toggle">Toggle watching widgets on or off</string>
+    <string name="blurb_pause_variable">Pause watching widgets: %1$s</string>
+    <string name="blurb_wake_lock_on">Keep the CPU awake for widget watching</string>
+    <string name="blurb_wake_lock_off">Stop keeping the CPU awake for widget watching</string>
+    <string name="blurb_wake_lock_toggle">Toggle keeping the CPU awake for widget watching</string>
+    <string name="blurb_wake_lock_variable">Keep the CPU awake: %1$s</string>
 
     <!-- Widget monitor (keeps widgets hosted so the event can fire) -->
     <string name="monitor_title">WidgetRelay</string>
@@ -141,6 +167,7 @@
     <string name="error_path_not_clickable">Element at path \'%1$s\' (or any of its parents) is not clickable</string>
     <string name="error_text_not_clickable">Element with text \'%1$s\' (or any of its parents) is not clickable</string>
     <string name="error_no_tree">Could not read the widget tree.</string>
+    <string name="error_bad_mode">\'%1$s\' is not a valid state. Use on, off or toggle.</string>
 
     <!-- Notification: a runner hit error_not_bound and points at the fix -->
     <string name="notification_rebind_channel_name">Widget binding lost</string>

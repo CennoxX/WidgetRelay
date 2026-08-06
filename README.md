@@ -37,9 +37,10 @@ Typical uses:
 
 ## Actions
 
-WidgetRelay registers three Tasker plugin actions (and one
-[event](#the-event)). All of them are configured the same way: pick an app and
-widget, choose a size, and tap the element you want in the extracted-data list.
+WidgetRelay registers five Tasker plugin actions (and one
+[event](#the-event)). The three that touch a widget are configured the same way:
+pick an app and widget, choose a size, and tap the element you want in the
+extracted-data list.
 
 | Action | Input | Output |
 | --- | --- | --- |
@@ -47,10 +48,31 @@ widget, choose a size, and tap the element you want in the extracted-data list.
 | **Get Widget Data** | *(empty path)* | `%widget_json` — the whole widget as a JSON tree |
 | **Click Widget Path** | element path | — |
 | **Click Widget Text** | element text | — |
+| **Pause Watching Widgets** | pause / resume / toggle | `%widget_setting_state` — the resulting state |
+| **Keep the CPU Awake** | on / off / toggle | `%widget_setting_state` — the resulting state |
 
 **Get Widget Data** covers both reading modes: give it an element path and it
 returns that one value, leave the path empty and it returns everything as JSON.
 The empty case is also slower on purpose — see [hack 3](#3-polling-because-there-is-no-widget-is-ready-callback).
+
+### Controlling the monitor from a task
+
+The last two actions control the [widget monitor](#why-this-needs-a-running-app)
+rather than reading anything, and are the same two switches the app's own screen
+offers — so a task can do what you would otherwise do by hand:
+
+- **Pause Watching Widgets** stops the monitor without forgetting which widgets
+  it watches, so resuming picks them all up again. Useful to keep it off while
+  you don't need events, or around something that would otherwise fight over the
+  widgets.
+- **Keep the CPU Awake** switches the monitor's optional wake lock. Since it
+  costs real battery, a task can turn it on only for the hours you actually need
+  changes caught during Doze, and off again afterwards.
+
+Both take **on**, **off** or **toggle**, and both accept a Tasker variable
+instead (`%state`, also understanding `true`/`false`, `yes`/`no`, `1`/`0`), so
+one action can serve both directions. `%widget_setting_state` reports the state
+they left things in, which is what you want after a toggle.
 
 ### Addressing elements
 
@@ -156,7 +178,7 @@ else happens inside the Tasker configuration screens.
 ## Setup
 
 1. Install WidgetRelay.
-2. In Tasker, add an action: **Plugin → WidgetRelay → _(pick one of the three)_**.
+2. In Tasker, add an action: **Plugin → WidgetRelay → _(pick one)_**.
 3. The widget picker opens immediately. Search for the app or widget you want.
 4. Grant the widget bind permission when the system asks.
 5. Choose the widget size in cells. **This matters** — many widgets render a
@@ -236,9 +258,10 @@ app/src/main/java/com/cennoxx/widgetrelay/
     ├── WidgetActionRuntime.kt            the runtime core: attach, poll, extract, click
     ├── ActivityConfigWidgetActionBase.kt shared configuration UI
     ├── WidgetRebindNotifier.kt           tells the user when a binding was lost
-    ├── GetWidgetData.kt                  ─┐ the three actions:
+    ├── GetWidgetData.kt                  ─┐ the widget actions:
     ├── ClickWidget.kt                     │ runner + config helper + config activity
     ├── ClickWidgetText.kt                ─┘
+    ├── MonitorSettings.kt                 pause / wake lock actions + their config
     └── WidgetUpdated.kt                   the event: same shape, condition runner
 ```
 
