@@ -85,7 +85,9 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
     private lateinit var nodesListView: ListView
 
     private var currentNodes = emptyList<WidgetNode>()
-    private val spans = (1..WidgetGrid.MAX_SPAN).toList()
+    // Y tops out one row lower than X - see WidgetGrid.MAX_SPAN_Y
+    private val spansX = (1..WidgetGrid.MAX_SPAN_X).toList()
+    private val spansY = (1..WidgetGrid.MAX_SPAN_Y).toList()
 
     private var boundWidgetId = -1
     private var savedWidgetId = -1
@@ -175,8 +177,8 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
     }
 
     private fun setupSizeSpinners() {
-        val labels = spans.map { it.toString() }
-        listOf(spanXSpinner, spanYSpinner).forEach { spinner ->
+        listOf(spanXSpinner to spansX, spanYSpinner to spansY).forEach { (spinner, spans) ->
+            val labels = spans.map { it.toString() }
             val adapter = ArrayAdapter(this, R.layout.spinner_item, labels)
             adapter.setDropDownViewResource(R.layout.spinner_item)
             spinner.adapter = adapter
@@ -249,8 +251,8 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
         // Preselect the widget's default size
         val (defaultX, defaultY) = info.getSpans(this)
         suppressListeners = true
-        spanXSpinner.setSelection(spans.indexOf(defaultX.coerceIn(1, WidgetGrid.MAX_SPAN)))
-        spanYSpinner.setSelection(spans.indexOf(defaultY.coerceIn(1, WidgetGrid.MAX_SPAN)))
+        spanXSpinner.setSelection(spansX.indexOf(defaultX.coerceIn(1, WidgetGrid.MAX_SPAN_X)))
+        spanYSpinner.setSelection(spansY.indexOf(defaultY.coerceIn(1, WidgetGrid.MAX_SPAN_Y)))
         suppressListeners = false
 
         if (widgetHost.bindId(boundWidgetId, info)) {
@@ -357,8 +359,8 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
         }, 1200)
     }
 
-    private fun selectedSpanX() = spans[spanXSpinner.selectedItemPosition]
-    private fun selectedSpanY() = spans[spanYSpinner.selectedItemPosition]
+    private fun selectedSpanX() = spansX[spanXSpinner.selectedItemPosition]
+    private fun selectedSpanY() = spansY[spanYSpinner.selectedItemPosition]
 
     private fun getAppAndWidgetNames(info: AppWidgetProviderInfo): Pair<String, String> {
         val pm = packageManager
@@ -394,8 +396,10 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
     override fun assignFromInput(input: TaskerInput<WidgetActionInput>) {
         val regular = input.regular
         suppressListeners = true
-        spanXSpinner.setSelection(spans.indexOf(regular.spanX.coerceIn(1, WidgetGrid.MAX_SPAN)))
-        spanYSpinner.setSelection(spans.indexOf(regular.spanY.coerceIn(1, WidgetGrid.MAX_SPAN)))
+        // coerceIn also repairs an action saved before MAX_SPAN_Y was lowered
+        // from 5 to 4 - reopening it corrects the stored size once Saved again
+        spanXSpinner.setSelection(spansX.indexOf(regular.spanX.coerceIn(1, WidgetGrid.MAX_SPAN_X)))
+        spanYSpinner.setSelection(spansY.indexOf(regular.spanY.coerceIn(1, WidgetGrid.MAX_SPAN_Y)))
         queryEditText.setText(regular.query ?: "")
         suppressListeners = false
 

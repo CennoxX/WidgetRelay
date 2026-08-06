@@ -13,21 +13,27 @@ import android.content.Context
  * they are wide.
  */
 object WidgetGrid {
-    /** Widgets can be configured from 1 x 1 up to [MAX_SPAN] x [MAX_SPAN] cells. */
-    const val MAX_SPAN = 5
+    /** Widgets can be configured from 1 x 1 up to [MAX_SPAN_X] x [MAX_SPAN_Y] cells. */
+    const val MAX_SPAN_X = 5
+    const val MAX_SPAN_Y = 5
 
     private const val COLUMNS = 5
     private const val ROW_ASPECT = 1.4f
     private const val SCREEN_MARGIN_DP = 48
 
-    /** Size in pixels of a [spanX] x [spanY] widget. */
+    /**
+     * Size in pixels of a [spanX] x [spanY] widget. Both are clamped here,
+     * not just in the config screen's spinners, so a size stored by an older
+     * version - or any other future caller - can never request an
+     * out-of-range widget either.
+     */
     fun sizePx(context: Context, spanX: Int, spanY: Int, availableWidthPx: Int = 0): Pair<Int, Int> {
         val density = context.resources.displayMetrics.density
         val width = availableWidthPx.takeIf { it > 0 }
             ?: (context.resources.displayMetrics.widthPixels - (SCREEN_MARGIN_DP * density).toInt())
         val columnWidth = width / COLUMNS
         val rowHeight = (columnWidth * ROW_ASPECT).toInt()
-        return spanX * columnWidth to spanY * rowHeight
+        return spanX.coerceIn(1, MAX_SPAN_X) * columnWidth to spanY.coerceIn(1, MAX_SPAN_Y) * rowHeight
     }
 
     /** Size in dp of a [spanX] x [spanY] widget, as the AppWidget APIs expect it. */
