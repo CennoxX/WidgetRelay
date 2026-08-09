@@ -3,8 +3,7 @@
 
     <!-- Tasker action labels -->
     <string name="action_get_widget_data">Get Widget Data</string>
-    <string name="action_click_widget_path">Click Widget Path</string>
-    <string name="action_click_widget_text">Click Widget Text</string>
+    <string name="action_click_widget">Click Widget</string>
     <string name="action_pause_watching">Pause Watching Widgets</string>
     <string name="action_keep_cpu_awake">Keep the CPU Awake</string>
 
@@ -45,7 +44,7 @@
     <string name="label_element_path">Element path (tap an element below)</string>
     <string name="label_element_path_optional">Element path (empty means any change)</string>
     <string name="label_element_path_or_json">Element path (empty returns widget as JSON)</string>
-    <string name="label_element_text">Element text (select below, or type /pattern/i for a regex)</string>
+    <string name="label_selector">Selector (path, text or regex):</string>
     <string name="header_extracted_data">Extracted data:</string>
     <string name="select_widget">Select Widget</string>
     <string name="app_line">App: %1$s</string>
@@ -74,11 +73,10 @@
     <!-- Action blurbs shown in Tasker's task list -->
     <string name="blurb_size">Size: %1$d x %2$d</string>
     <string name="blurb_path">Path: %1$s</string>
-    <string name="blurb_text">Text: %1$s</string>
+    <string name="blurb_selector">Selector: %1$s</string>
     <string name="blurb_get_data">Get \'%1$s\' of widget \'%2$s\' from app \'%3$s\'</string>
     <string name="blurb_get_json">Get all data of widget \'%1$s\' from app \'%2$s\' as JSON</string>
-    <string name="blurb_click_path">Click \'%1$s\' of widget \'%2$s\' from app \'%3$s\'</string>
-    <string name="blurb_click_text">Click element with text \'%1$s\' of widget \'%2$s\' from app \'%3$s\'</string>
+    <string name="blurb_click_selector">Click \'%1$s\' of widget \'%2$s\' from app \'%3$s\'</string>
     <string name="blurb_updated_element">When \'%1$s\' of widget \'%2$s\' from app \'%3$s\' changes</string>
     <string name="blurb_updated_any">When anything in widget \'%1$s\' from app \'%2$s\' changes</string>
     <string name="blurb_pause_on">Pause watching widgets</string>
@@ -160,12 +158,12 @@
     <!-- Runtime errors reported back to Tasker -->
     <string name="error_no_overlay">WidgetRelay needs the \'Display over other apps\' permission to access widgets in the background. Please grant it in the Android settings.</string>
     <string name="error_not_bound">Widget \'%1$s\' is not bound anymore. Reconfigure the Tasker action.</string>
+    <string name="error_no_selector">No selector configured. Reconfigure the Tasker action.</string>
+    <string name="error_selector_not_found">No element found for selector \'%1$s\'</string>
+    <string name="error_selector_not_clickable">Element for selector \'%1$s\' (or any parent) is not clickable</string>
     <string name="error_no_path">No element path configured. Reconfigure the Tasker action.</string>
-    <string name="error_no_text">No element text configured. Reconfigure the Tasker action.</string>
     <string name="error_path_not_found">No element found at path \'%1$s\'</string>
-    <string name="error_text_not_found">No element found with text \'%1$s\'</string>
-    <string name="error_path_not_clickable">Element at path \'%1$s\' (or any of its parents) is not clickable</string>
-    <string name="error_text_not_clickable">Element with text \'%1$s\' (or any of its parents) is not clickable</string>
+    <string name="error_path_not_clickable">Element at path \'%1$s\' (or any parent) is not clickable</string>
     <string name="error_text_invalid_regex">\'%1$s\' looks like a /pattern/flags regex but isn’t valid. Supported flags: i, m, s.</string>
     <string name="error_no_tree">Could not read the widget tree.</string>
     <string name="error_bad_mode">\'%1$s\' is not a valid state. Use on, off or toggle.</string>

@@ -32,18 +32,7 @@
             android:name=".tasker.widgets.ActivityConfigClickWidget"
             android:exported="true"
             android:icon="@mipmap/ic_launcher"
-            android:label="@string/action_click_widget_path"
-            android:theme="@style/AppTheme.NoActionBar">
-            <intent-filter>
-                <action android:name="com.twofortyfouram.locale.intent.action.EDIT_SETTING" />
-            </intent-filter>
-        </activity>
-
-        <activity
-            android:name=".tasker.widgets.ActivityConfigClickWidgetText"
-            android:exported="true"
-            android:icon="@mipmap/ic_launcher"
-            android:label="@string/action_click_widget_text"
+            android:label="@string/action_click_widget"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="com.twofortyfouram.locale.intent.action.EDIT_SETTING" />

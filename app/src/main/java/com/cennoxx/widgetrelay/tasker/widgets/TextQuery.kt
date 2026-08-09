@@ -1,7 +1,8 @@
 package com.cennoxx.widgetrelay.tasker.widgets
 
 /**
- * What "Click Widget Text" matches an element's text or content description
+ * What the text/regex form of "Click Widget" matches against an element's
+ * text or content description
  * against: either an exact (trimmed) string, or - written as `/pattern/flags`,
  * the familiar JS/grep convention - a regular expression, so `/^coffee$/i`
  * matches "COFFEE" and "Coffee" alike.

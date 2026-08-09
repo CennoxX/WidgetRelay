@@ -31,14 +31,15 @@ Typical uses:
 
 ## Actions
 
-WidgetRelay registers five Tasker plugin actions (and one [event](#the-event)). The three that touch a widget are configured the same way: pick an app and widget, choose a size, and tap the element you want in the extracted-data list.
+WidgetRelay registers four Tasker plugin actions (and one [event](#the-event)). The two that touch a widget are configured the same way: pick an app and widget, choose a size, and tap the element you want in the extracted-data list or enter an selector.
 
 | Action | Input | Output |
 | --- | --- | --- |
 | **Get Widget Data** | element path | `%widget_value` — the element's text, content description or resource id |
 | **Get Widget Data** | *(empty path)* | `%widget_json` — the whole widget as a JSON tree |
-| **Click Widget Path** | element path | — |
-| **Click Widget Text** | element text | — |
+| **Click Widget** | element path | — |
+| **Click Widget** | text | — |
+| **Click Widget** | regex | — |
 | **Pause Watching Widgets** | pause / resume / toggle | `%widget_setting_state` — the resulting state |
 | **Keep the CPU Awake** | on / off / toggle | `%widget_setting_state` — the resulting state |
 
@@ -57,9 +58,9 @@ Both take **on**, **off** or **toggle**, and both accept a Tasker variable inste
 
 Elements are addressed by their **path** in the widget's view tree: `/root` is the widget itself, `/root/0/2` is the third child of the first child, and so on. The configuration screen shows every extracted element with its path, so you normally never type one by hand — you tap the element and the path is filled in.
 
-Paths are stable as long as the widget's layout doesn't change. If a widget rearranges itself (many do, depending on state or size), prefer **Click Widget Text**, which searches by the visible text or content description instead. Both input fields accept Tasker variables, so `%par1` or `%text` work too.
+**Click Widget** uses a selector: `/root/...` clicks by path; anything else matches visible text or a content description. In its configuration, tap an element to select its path, or long-press one to select its text. The selector accepts Tasker variables, so `%par1` or `%text` work too.
 
-**Click Widget Text** also accepts a regular expression, written the familiar `/pattern/flags` way (like JavaScript or grep) - `/^coffee$/i` matches "COFFEE" and "Coffee" alike. Supported flags are `i` (case-insensitive), `m` (multiline `^`/`$`) and `s` (`.` also matches newlines). It's a search, not a full match, so `/coffee/i` also matches "Buy coffee" - anchor with `^`/`$` if you need the whole text. Anything that isn't wrapped in slashes is matched exactly, as before; a plain widget text that happens to start and end with `/` is the one case this can misread, and is rare enough to be an acceptable trade-off. An invalid pattern or flag fails the action with a clear error rather than silently falling back to a literal match.
+Text selectors also accept a regular expression, written `/pattern/flags` - `/^coffee$/i` matches "COFFEE" and "Coffee" alike. Supported flags are `i` (case-insensitive), `m` (multiline `^`/`$`) and `s` (`.` also matches newlines). It's a search, not a full match, so `/coffee/i` also matches "Buy coffee". Anything not wrapped in slashes is an exact match. Invalid patterns or flags fail with a clear error.
 
 ### JSON output
 
@@ -202,10 +203,9 @@ app/src/main/java/com/cennoxx/widgetrelay/
     ├── WidgetActionRuntime.kt            the runtime core: attach, poll, extract, click
     ├── ActivityConfigWidgetActionBase.kt shared configuration UI
     ├── WidgetRebindNotifier.kt           tells the user when a binding was lost
-    ├── TextQuery.kt                      literal or /regex/ matching for Click Widget Text
+    ├── TextQuery.kt                      literal or /regex/ selector matching
     ├── GetWidgetData.kt                  ─┐ the widget actions:
-    ├── ClickWidget.kt                     │ runner + config helper + config activity
-    ├── ClickWidgetText.kt                ─┘
+    ├── ClickWidget.kt                    ─┘ runner + config helper + config activity
     ├── MonitorSettings.kt                 pause / wake lock actions + their config
     └── WidgetUpdated.kt                   the event: same shape, condition runner
 ```
@@ -333,7 +333,7 @@ None of this is a guarantee. A sufficiently determined vendor ROM will still kil
 - **Background activity launch restrictions.** Widget buttons that fire a `PendingIntent` for a *broadcast* or *service* (refresh, play/pause, toggles) work fine. Ones that open an *activity* may be blocked by Android when the click comes from the background.
 - **Timing.** A widget that needs longer than 8 s to deliver its content will time out; a list that delivers its first rows more than 500 ms after the static layout can still be captured empty by a path-less Get Widget Data. Both bounds are constants at the top of `WidgetActionRuntime.kt`.
 - **Uninstalls break widget bindings.** The system deletes a host's widget bindings when the app is uninstalled — replacing it with a differently signed build (debug vs. release) counts, normal updates don't. Actions store the widget's provider too, so reopening the action binds the same widget again automatically; just save it once more. Actions saved by versions that didn't store the provider yet have to be reconfigured once by hand. If an action *runs* against a lost binding, WidgetRelay posts a notification saying so — tapping it opens Tasker, since there is no API to jump straight to one action's edit screen; open that action and tap Save to rebind it.
-- **Paths are brittle.** Widgets that rearrange their layout invalidate stored paths. Use Click Widget Text where possible.
+- **Paths are brittle.** Widgets that rearrange their layout invalidate stored paths. Use a text selector where possible.
 - **One element per read.** Get Widget Data with a path returns a single value; leave the path empty and parse `%widget_json` if you need several.
 - **The event needs the app running.** A monitored widget is hosted continuously, which costs battery and a permanent notification, and the service can still be killed by aggressive power management — see [hack 10](#10-staying-alive-for-the-event). If you only need to check something occasionally, polling Get Widget Data on a timer is the more robust choice.
 - **Deleted events are not noticed.** Tasker doesn't tell plugins when an event is removed, so its widget stays monitored until you remove it on the monitor screen.

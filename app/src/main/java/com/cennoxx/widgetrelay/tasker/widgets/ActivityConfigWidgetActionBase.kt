@@ -58,6 +58,9 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
     /** What tapping an element in the extracted-data list puts into the query field. */
     protected open fun queryValueForNode(node: WidgetNode): String? = node.pathInTree
 
+    /** What long-pressing an element puts into the query field, if supported. */
+    protected open fun queryValueForNodeLongPress(node: WidgetNode): String? = null
+
     /** Called with the final input just before it is handed back to Tasker. */
     protected open fun onSavingForTasker(input: WidgetActionInput) {}
 
@@ -138,6 +141,16 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
                 currentNodes.getOrNull(position)
                     ?.let { queryValueForNode(it) }
                     ?.let { queryEditText.setText(it) }
+            }
+            nodesListView.setOnItemLongClickListener { _, _, position, _ ->
+                val value = currentNodes.getOrNull(position)
+                    ?.let { queryValueForNodeLongPress(it) }
+                if (value == null) {
+                    false
+                } else {
+                    queryEditText.setText(value)
+                    true
+                }
             }
         } else {
             findViewById<View>(R.id.queryRow).visibility = View.GONE

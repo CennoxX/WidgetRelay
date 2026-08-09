@@ -15,16 +15,27 @@ private const val ERROR_NOT_BOUND = 1
 private const val ERROR_NOT_FOUND = 2
 private const val ERROR_NOT_CLICKABLE = 3
 private const val ERROR_NO_OVERLAY = 4
+private const val ERROR_INVALID_SELECTOR = 5
 
-/** Clicks the widget element selected by its path, firing the provider's PendingIntent. */
+/** Clicks a widget element selected by path, visible text, or a regular expression. */
 class ClickWidgetRunner : TaskerPluginRunnerActionNoOutput<WidgetActionInput>() {
     override fun run(context: Context, input: TaskerInput<WidgetActionInput>): TaskerPluginResult<Unit> {
         if (!WidgetActionRuntime.hasOverlayPermission(context)) {
             return TaskerPluginResultError(ERROR_NO_OVERLAY, context.getString(R.string.error_no_overlay))
         }
-        val path = input.regular.query?.takeIf { it.isNotBlank() }
-            ?: return TaskerPluginResultError(ERROR_NOT_FOUND, context.getString(R.string.error_no_path))
-        return when (WidgetActionRuntime.clickPath(context, input.regular, path)) {
+        val selector = input.regular.query?.trim()?.takeIf { it.isNotBlank() }
+            ?: return TaskerPluginResultError(ERROR_NOT_FOUND, context.getString(R.string.error_no_selector))
+        val result = if (selector.startsWith("/root/")) {
+            WidgetActionRuntime.clickPath(context, input.regular, selector)
+        } else {
+            val query = TextQuery.parse(selector)
+                ?: return TaskerPluginResultError(
+                    ERROR_INVALID_SELECTOR,
+                    context.getString(R.string.error_text_invalid_regex, selector)
+                )
+            WidgetActionRuntime.clickText(context, input.regular, query)
+        }
+        return when (result) {
             WidgetActionRuntime.ClickResult.NOT_BOUND -> {
                 WidgetRebindNotifier.notifyNotBound(
                     context, input.regular.appWidgetId, input.regular.widgetLabel, input.regular.appName
@@ -36,11 +47,11 @@ class ClickWidgetRunner : TaskerPluginRunnerActionNoOutput<WidgetActionInput>() 
             }
             WidgetActionRuntime.ClickResult.NOT_FOUND -> TaskerPluginResultError(
                 ERROR_NOT_FOUND,
-                context.getString(R.string.error_path_not_found, path)
+                context.getString(R.string.error_selector_not_found, selector)
             )
             WidgetActionRuntime.ClickResult.NOT_CLICKABLE -> TaskerPluginResultError(
                 ERROR_NOT_CLICKABLE,
-                context.getString(R.string.error_path_not_clickable, path)
+                context.getString(R.string.error_selector_not_clickable, selector)
             )
             WidgetActionRuntime.ClickResult.CLICKED -> TaskerPluginResultSucess()
         }
@@ -55,17 +66,18 @@ class ClickWidgetHelper(config: TaskerPluginConfig<WidgetActionInput>) :
     override fun addToStringBlurb(input: TaskerInput<WidgetActionInput>, blurbBuilder: StringBuilder) {
         val regular = input.regular
         blurbBuilder.appendWidgetBlurbHeader(context, regular)
-        blurbBuilder.appendLine(context.getString(R.string.blurb_path, regular.query))
+        blurbBuilder.appendLine(context.getString(R.string.blurb_selector, regular.query))
         blurbBuilder.appendLine()
         blurbBuilder.append(
-            context.getString(R.string.blurb_click_path, regular.query, regular.widgetLabel, regular.appName)
+            context.getString(R.string.blurb_click_selector, regular.query, regular.widgetLabel, regular.appName)
         )
     }
 }
 
 class ActivityConfigClickWidget : ActivityConfigWidgetActionBase() {
-    override val queryLabelRes = R.string.label_element_path
+    override val queryLabelRes = R.string.label_selector
     override fun isNodeSelectable(node: WidgetNode) = node.clickable
     override val selectableDescriptionRes = R.string.selectable_clickable
+    override fun queryValueForNodeLongPress(node: WidgetNode) = node.text ?: node.contentDescription
     override val helper by lazy { ClickWidgetHelper(this) }
 }
