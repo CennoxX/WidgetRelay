@@ -163,6 +163,7 @@
     <string name="error_no_path">No element path configured. Reconfigure the Tasker action.</string>
     <string name="error_path_not_clickable">Element at path \"%1$s\" (or any parent) is not clickable</string>
     <string name="error_text_invalid_regex">\"%1$s\" looks like a /pattern/flags regex but isn’t valid. Supported flags: i, m, s.</string>
+    <string name="error_selector_must_be_path_or_regex">Use a path (/root/...) or a regex.</string>
     <string name="error_no_tree">Could not read the widget tree.</string>
     <string name="error_bad_mode">\"%1$s\" is not a valid state. Use on, off or toggle.</string>
 

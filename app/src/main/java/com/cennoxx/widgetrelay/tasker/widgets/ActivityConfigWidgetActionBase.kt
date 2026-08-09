@@ -52,6 +52,9 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
     protected open val queryLabelRes: Int? = null
     protected abstract val helper: TaskerPluginConfigHelper<WidgetActionInput, *, *>
 
+    /** Whether non-path queries must be regular expressions. */
+    protected open val queryMustBePathOrRegex = false
+
     /** Whether the query field has to be filled in before saving. */
     protected open val queryRequired = true
 
@@ -486,6 +489,13 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
         }
         if (queryLabelRes != null && queryRequired && queryEditText.text.isNullOrBlank()) {
             Toast.makeText(this, R.string.toast_select_element, Toast.LENGTH_SHORT).show()
+            return
+        }
+        val query = queryEditText.text?.toString()?.trim()
+        if (queryLabelRes != null && queryMustBePathOrRegex && !query.isNullOrBlank() &&
+            !query.startsWith("/root/") && TextQuery.parse(query) !is TextQuery.Pattern
+        ) {
+            Toast.makeText(this, R.string.error_selector_must_be_path_or_regex, Toast.LENGTH_SHORT).show()
             return
         }
         // The runners attach the widget to an invisible overlay window so that

@@ -96,7 +96,8 @@ private fun changedPaths(old: JSONObject, new: JSONObject): List<String> {
 
 /**
  * Fires when a monitored widget's content changes. If an element path is
- * configured, only changes to that one element count; otherwise any change to
+ * configured, only changes to that one element count; if a regex is configured,
+ * only changes to elements matching that regex count, otherwise any change to
  * the widget does.
  */
 class WidgetUpdatedRunner :
@@ -143,7 +144,7 @@ class WidgetUpdatedRunner :
                 )
             }
 
-            val query = TextQuery.parse(selector)
+            val query = TextQuery.parseRegexOnly(selector)
                 ?: return TaskerPluginResultConditionUnsatisfied()
 
             val path = changed.firstOrNull { path ->
@@ -198,6 +199,7 @@ class WidgetUpdatedHelper(config: TaskerPluginConfig<WidgetActionInput>) :
 class ActivityConfigWidgetUpdated : ActivityConfigWidgetActionBase() {
     override val queryLabelRes = R.string.label_selector_path_regex_optional
     override val queryRequired = false
+    override val queryMustBePathOrRegex = true
     override fun isNodeSelectable(node: WidgetNode) = node.bestValue != null
     override fun queryValueForNodeLongPress(node: WidgetNode) = node.text ?: node.contentDescription
     override val helper by lazy { WidgetUpdatedHelper(this) }

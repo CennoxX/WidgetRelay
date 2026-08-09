@@ -53,5 +53,10 @@ sealed class TextQuery {
                 null
             }
         }
+
+        fun parseRegexOnly(query: String): TextQuery? {
+            if (!SYNTAX.matches(query)) return null
+            return parse(query)
+        }
     }
 }

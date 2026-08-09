@@ -30,7 +30,7 @@ class WidgetDataOutput(
 
 /**
  * Reads a widget. With an element path it returns that one element's value;
- * with a text or regex selector it returns the first matching element's value;
+ * with a regex selector it returns the first matching element's value;
  * without one it returns the whole widget as a JSON tree.
  *
  * The two modes are not just different outputs, they capture differently: a
@@ -50,7 +50,7 @@ class GetWidgetDataRunner : TaskerPluginRunnerAction<WidgetActionInput, WidgetDa
 
         val selector = input.regular.query?.takeIf { it.isNotBlank() }
         val query = selector?.takeIf { !it.startsWith("/root/") }?.let {
-            TextQuery.parse(it) ?: return TaskerPluginResultErrorWithOutput(
+            TextQuery.parseRegexOnly(it) ?: return TaskerPluginResultErrorWithOutput(
                 ERROR_INVALID_SELECTOR,
                 context.getString(R.string.error_text_invalid_regex, it)
             )
@@ -124,6 +124,7 @@ class ActivityConfigGetWidgetData : ActivityConfigWidgetActionBase() {
     override val queryLabelRes = R.string.label_selector_path_regex_json
     // Empty is a valid configuration here: it means "return everything"
     override val queryRequired = false
+    override val queryMustBePathOrRegex = true
     // Nodes without a value would just return an empty string
     override fun isNodeSelectable(node: WidgetNode) = node.bestValue != null
     override fun queryValueForNodeLongPress(node: WidgetNode) = node.text ?: node.contentDescription
