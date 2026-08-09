@@ -43,7 +43,7 @@
     <!-- Action configuration screen -->
     <string name="label_element_path">Element path (tap an element below)</string>
     <string name="label_element_path_optional">Element path (empty means any change)</string>
-    <string name="label_element_path_or_json">Element path (empty returns widget as JSON)</string>
+    <string name="label_element_path_or_json">Selector (path, regex or empty for widget as JSON)</string>
     <string name="label_selector">Selector (path, text or regex):</string>
     <string name="header_extracted_data">Extracted data:</string>
     <string name="select_widget">Select Widget</string>
@@ -162,7 +162,6 @@
     <string name="error_selector_not_found">No element found for selector \'%1$s\'</string>
     <string name="error_selector_not_clickable">Element for selector \'%1$s\' (or any parent) is not clickable</string>
     <string name="error_no_path">No element path configured. Reconfigure the Tasker action.</string>
-    <string name="error_path_not_found">No element found at path \'%1$s\'</string>
     <string name="error_path_not_clickable">Element at path \'%1$s\' (or any parent) is not clickable</string>
     <string name="error_text_invalid_regex">\'%1$s\' looks like a /pattern/flags regex but isn’t valid. Supported flags: i, m, s.</string>
     <string name="error_no_tree">Could not read the widget tree.</string>
