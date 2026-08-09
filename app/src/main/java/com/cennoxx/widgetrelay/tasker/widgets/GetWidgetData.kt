@@ -121,7 +121,7 @@ class GetWidgetDataHelper(config: TaskerPluginConfig<WidgetActionInput>) :
 }
 
 class ActivityConfigGetWidgetData : ActivityConfigWidgetActionBase() {
-    override val queryLabelRes = R.string.label_element_path_or_json
+    override val queryLabelRes = R.string.label_selector_path_regex_json
     // Empty is a valid configuration here: it means "return everything"
     override val queryRequired = false
     // Nodes without a value would just return an empty string

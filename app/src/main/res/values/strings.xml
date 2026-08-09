@@ -37,13 +37,13 @@
     <string name="mode_toggle">Toggle</string>
     <string name="mode_pause">Pause</string>
     <string name="mode_resume">Resume</string>
-    <string name="setting_pause_description">Pauses the widget monitor. While paused, watched widgets are not loaded in the background and \'Widget Updated\' events do not fire. The list of watched widgets is kept, so resuming picks them all up again.</string>
+    <string name="setting_pause_description">Pauses the widget monitor. While paused, watched widgets are not loaded in the background and \"Widget Updated\" events do not fire. The list of watched widgets is kept, so resuming picks them all up again.</string>
     <string name="setting_wake_lock_description">Keeps the CPU awake so widget changes are noticed while the screen is off and the device is in Doze. Costs noticeably more battery - a task can switch it on only for the hours you actually need it.</string>
 
     <!-- Action configuration screen -->
     <string name="label_element_path">Element path (tap an element below)</string>
-    <string name="label_element_path_optional">Element path (empty means any change)</string>
-    <string name="label_element_path_or_json">Selector (path, regex or empty for widget as JSON)</string>
+    <string name="label_selector_path_regex_optional">Selector (path, regex or empty for all changes)</string>
+    <string name="label_selector_path_regex_json">Selector (path, regex or empty for widget as JSON)</string>
     <string name="label_selector">Selector (path, text or regex):</string>
     <string name="header_extracted_data">Extracted data:</string>
     <string name="select_widget">Select Widget</string>
@@ -68,17 +68,16 @@
     <string name="status_widgets_in_apps">%1$d widgets in %2$d apps</string>
     <string name="toast_select_widget">Please select a widget first</string>
     <string name="toast_select_element">Please select an element from the extracted data</string>
-    <string name="toast_overlay_permission">Please allow \'Display over other apps\' - needed to access the widget when Tasker runs the action</string>
+    <string name="toast_overlay_permission">Please allow \"Display over other apps\" - needed to access the widget when Tasker runs the action</string>
 
     <!-- Action blurbs shown in Tasker's task list -->
     <string name="blurb_size">Size: %1$d x %2$d</string>
-    <string name="blurb_path">Path: %1$s</string>
     <string name="blurb_selector">Selector: %1$s</string>
-    <string name="blurb_get_data">Get \'%1$s\' of widget \'%2$s\' from app \'%3$s\'</string>
-    <string name="blurb_get_json">Get all data of widget \'%1$s\' from app \'%2$s\' as JSON</string>
-    <string name="blurb_click_selector">Click \'%1$s\' of widget \'%2$s\' from app \'%3$s\'</string>
-    <string name="blurb_updated_element">When \'%1$s\' of widget \'%2$s\' from app \'%3$s\' changes</string>
-    <string name="blurb_updated_any">When anything in widget \'%1$s\' from app \'%2$s\' changes</string>
+    <string name="blurb_get_data">Get \"%1$s\" of widget \"%2$s\" from app \"%3$s\"</string>
+    <string name="blurb_get_json">Get all data of widget \"%1$s\" from app \"%2$s\" as JSON</string>
+    <string name="blurb_click_selector">Click \"%1$s\" of widget \"%2$s\" from app \"%3$s\"</string>
+    <string name="blurb_updated_element">When \"%1$s\" of widget \"%2$s\" from app \"%3$s\" changes</string>
+    <string name="blurb_updated_any">When anything in widget \"%1$s\" from app \"%2$s\" changes</string>
     <string name="blurb_pause_on">Pause watching widgets</string>
     <string name="blurb_pause_off">Resume watching widgets</string>
     <string name="blurb_pause_toggle">Toggle watching widgets on or off</string>
@@ -91,7 +90,7 @@
     <!-- Widget monitor (keeps widgets hosted so the event can fire) -->
     <string name="monitor_title">WidgetRelay</string>
     <string name="monitor_channel_name">Widget monitor</string>
-    <string name="monitor_channel_description">Shown while widgets are being watched for the \'Widget Updated\' event</string>
+    <string name="monitor_channel_description">Shown while widgets are being watched for the \"Widget Updated\" event</string>
     <string name="monitor_fgs_explanation">Hosts home screen widgets in the background so their updates can trigger Tasker events</string>
     <string name="monitor_notification_title">Watching widgets</string>
     <plurals name="monitor_notification_text">
@@ -102,9 +101,9 @@
 
     <!-- Monitor state card -->
     <string name="monitor_state_nothing">Nothing to watch</string>
-    <string name="monitor_state_nothing_hint">Add a \'Widget Updated\' event in Tasker (Profile → Event → Plugin → WidgetRelay). Its widget then appears here and is kept loaded in the background.</string>
+    <string name="monitor_state_nothing_hint">Add a \"Widget Updated\" event in Tasker (Profile → Event → Plugin → WidgetRelay). Its widget then appears here and is kept loaded in the background.</string>
     <string name="monitor_state_paused">Paused</string>
-    <string name="monitor_state_paused_hint">The widgets below are not loaded and \'Widget Updated\' events will not fire until you resume.</string>
+    <string name="monitor_state_paused_hint">The widgets below are not loaded and \"Widget Updated\" events will not fire until you resume.</string>
     <string name="monitor_state_starting">Starting…</string>
     <string name="monitor_state_starting_hint">Loading the widgets in the background. If this doesn’t change within a few seconds, check the permissions below.</string>
     <plurals name="monitor_state_running">
@@ -130,15 +129,15 @@
     <string name="monitor_permission_notifications">Notifications</string>
     <string name="monitor_permission_notifications_why">The background monitor has to show an ongoing notification. Android only lets it run while that notification can be posted.</string>
     <string name="monitor_permission_battery">Ignore battery optimisation</string>
-    <string name="monitor_permission_battery_why">Battery optimisation freezes the monitor after a while, so widget changes go unnoticed. Only needed for the \'Widget Updated\' event.</string>
+    <string name="monitor_permission_battery_why">Battery optimisation freezes the monitor after a while, so widget changes go unnoticed. Only needed for the \"Widget Updated\" event.</string>
 
     <!-- Monitored widgets -->
     <string name="monitor_header_widgets">Watched widgets</string>
-    <string name="monitor_widgets_summary">One entry per \'Widget Updated\' event. Tasker doesn’t report a deleted event, so remove entries you no longer need by hand.</string>
+    <string name="monitor_widgets_summary">One entry per \"Widget Updated\" event. Tasker doesn’t report a deleted event, so remove entries you no longer need by hand.</string>
     <string name="monitor_empty">No widgets yet.</string>
     <string name="monitor_remove">Remove</string>
-    <string name="monitor_remove_confirm_title">Remove \'%1$s\'?</string>
-    <string name="monitor_remove_confirm_message">Tasker doesn’t tell when a \'Widget Updated\' event is deleted, so this is the only way to stop watching a widget. If you still have that event in Tasker, it will stop firing once this is removed - you can re-add it by opening that event\'s configuration again.</string>
+    <string name="monitor_remove_confirm_title">Remove \"%1$s\"?</string>
+    <string name="monitor_remove_confirm_message">Tasker doesn’t tell when a \"Widget Updated\" event is deleted, so this is the only way to stop watching a widget. If you still have that event in Tasker, it will stop firing once this is removed - you can re-add it by opening that event\'s configuration again.</string>
     <string name="monitor_remove_confirm_button">Stop watching</string>
     <string name="cancel">Cancel</string>
     <string name="monitor_wake_lock">Keep the CPU awake</string>
@@ -151,26 +150,26 @@
     <string name="monitor_item_changes">%1$d changes, last %2$s</string>
     <string name="monitor_item_no_change_yet">no change seen yet</string>
     <string name="monitor_item_inactive_hint">Starts as soon as monitoring runs and the permissions above are granted.</string>
-    <string name="monitor_error_no_overlay">\'Display over other apps\' permission missing</string>
+    <string name="monitor_error_no_overlay">\"Display over other apps\" permission missing</string>
     <string name="monitor_error_not_bound">Widget is not bound anymore - reconfigure the Tasker event</string>
     <string name="monitor_error_attach">Could not host the widget</string>
 
     <!-- Runtime errors reported back to Tasker -->
-    <string name="error_no_overlay">WidgetRelay needs the \'Display over other apps\' permission to access widgets in the background. Please grant it in the Android settings.</string>
-    <string name="error_not_bound">Widget \'%1$s\' is not bound anymore. Reconfigure the Tasker action.</string>
+    <string name="error_no_overlay">WidgetRelay needs the \"Display over other apps\" permission to access widgets in the background. Please grant it in the Android settings.</string>
+    <string name="error_not_bound">Widget \"%1$s\" is not bound anymore. Reconfigure the Tasker action.</string>
     <string name="error_no_selector">No selector configured. Reconfigure the Tasker action.</string>
-    <string name="error_selector_not_found">No element found for selector \'%1$s\'</string>
-    <string name="error_selector_not_clickable">Element for selector \'%1$s\' (or any parent) is not clickable</string>
+    <string name="error_selector_not_found">No element found for selector \"%1$s\"</string>
+    <string name="error_selector_not_clickable">Element for selector \"%1$s\" (or any parent) is not clickable</string>
     <string name="error_no_path">No element path configured. Reconfigure the Tasker action.</string>
-    <string name="error_path_not_clickable">Element at path \'%1$s\' (or any parent) is not clickable</string>
-    <string name="error_text_invalid_regex">\'%1$s\' looks like a /pattern/flags regex but isn’t valid. Supported flags: i, m, s.</string>
+    <string name="error_path_not_clickable">Element at path \"%1$s\" (or any parent) is not clickable</string>
+    <string name="error_text_invalid_regex">\"%1$s\" looks like a /pattern/flags regex but isn’t valid. Supported flags: i, m, s.</string>
     <string name="error_no_tree">Could not read the widget tree.</string>
-    <string name="error_bad_mode">\'%1$s\' is not a valid state. Use on, off or toggle.</string>
+    <string name="error_bad_mode">\"%1$s\" is not a valid state. Use on, off or toggle.</string>
 
     <!-- Notification: a runner hit error_not_bound and points at the fix -->
     <string name="notification_rebind_channel_name">Widget binding lost</string>
     <string name="notification_rebind_channel_description">Shown when a Tasker action\'s widget is no longer bound and needs to be reconfigured</string>
     <string name="notification_rebind_title">Widget binding lost</string>
-    <string name="notification_rebind_text">\'%1$s\' (%2$s) is no longer bound. Open its action in Tasker and tap Save to rebind it.</string>
+    <string name="notification_rebind_text">\"%1$s\" (%2$s) is no longer bound. Open its action in Tasker and tap Save to rebind it.</string>
     <string name="notification_rebind_fallback_name">A widget</string>
 </resources>

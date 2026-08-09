@@ -123,18 +123,49 @@ class WidgetUpdatedRunner :
         val newValues = update.values.asValueMap()
         val oldValues = update.previousValues.asValueMap()
         val changed = changedPaths(oldValues, newValues)
-        val path = regular.query?.takeIf { it.isNotBlank() }
+        val selector = regular.query?.takeIf { it.isNotBlank() }
 
-        if (path != null && !changed.contains(path)) {
-            // Something else in the widget changed, not the watched element
-            return TaskerPluginResultConditionUnsatisfied()
+        if (selector != null) {
+            if (selector.startsWith("/root/")) {
+                if (!changed.contains(selector)) {
+                    // Something else in the widget changed, not the watched element
+                    return TaskerPluginResultConditionUnsatisfied()
+                }
+
+                return TaskerPluginResultConditionSatisfied(
+                    context,
+                    WidgetUpdatedOutput(
+                        widgetValue = newValues.valueAt(selector),
+                        widgetOldValue = oldValues.valueAt(selector),
+                        widgetChanged = changed.toTypedArray(),
+                        widgetJson = update.json ?: ""
+                    )
+                )
+            }
+
+            val query = TextQuery.parse(selector)
+                ?: return TaskerPluginResultConditionUnsatisfied()
+
+            val path = changed.firstOrNull { path ->
+                newValues.valueAt(path)?.let { query.matches(it) } == true
+            } ?: return TaskerPluginResultConditionUnsatisfied()
+
+            return TaskerPluginResultConditionSatisfied(
+                context,
+                WidgetUpdatedOutput(
+                    widgetValue = newValues.valueAt(path),
+                    widgetOldValue = oldValues.valueAt(path),
+                    widgetChanged = changed.toTypedArray(),
+                    widgetJson = update.json ?: ""
+                )
+            )
         }
 
         return TaskerPluginResultConditionSatisfied(
             context,
             WidgetUpdatedOutput(
-                widgetValue = path?.let { newValues.valueAt(it) } ?: "",
-                widgetOldValue = path?.let { oldValues.valueAt(it) } ?: "",
+                widgetValue = "",
+                widgetOldValue = "",
                 widgetChanged = changed.toTypedArray(),
                 widgetJson = update.json ?: ""
             )
@@ -151,12 +182,12 @@ class WidgetUpdatedHelper(config: TaskerPluginConfig<WidgetActionInput>) :
     override fun addToStringBlurb(input: TaskerInput<WidgetActionInput>, blurbBuilder: StringBuilder) {
         val regular = input.regular
         blurbBuilder.appendWidgetBlurbHeader(context, regular)
-        val path = regular.query?.takeIf { it.isNotBlank() }
-        if (path != null) blurbBuilder.appendLine(context.getString(R.string.blurb_path, path))
+        val selector = regular.query?.takeIf { it.isNotBlank() }
+        if (selector != null) blurbBuilder.appendLine(context.getString(R.string.blurb_selector, selector))
         blurbBuilder.appendLine()
         blurbBuilder.append(
-            if (path != null) {
-                context.getString(R.string.blurb_updated_element, path, regular.widgetLabel, regular.appName)
+            if (selector != null) {
+                context.getString(R.string.blurb_updated_element, selector, regular.widgetLabel, regular.appName)
             } else {
                 context.getString(R.string.blurb_updated_any, regular.widgetLabel, regular.appName)
             }
@@ -165,9 +196,10 @@ class WidgetUpdatedHelper(config: TaskerPluginConfig<WidgetActionInput>) :
 }
 
 class ActivityConfigWidgetUpdated : ActivityConfigWidgetActionBase() {
-    override val queryLabelRes = R.string.label_element_path_optional
+    override val queryLabelRes = R.string.label_selector_path_regex_optional
     override val queryRequired = false
     override fun isNodeSelectable(node: WidgetNode) = node.bestValue != null
+    override fun queryValueForNodeLongPress(node: WidgetNode) = node.text ?: node.contentDescription
     override val helper by lazy { WidgetUpdatedHelper(this) }
 
     /**
