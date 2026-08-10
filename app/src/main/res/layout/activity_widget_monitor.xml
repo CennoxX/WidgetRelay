@@ -11,11 +11,20 @@
     <ListView
         android:id="@+id/monitorListView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:clipToPadding="false"
         android:divider="@null"
         android:dividerHeight="0dp"
-        android:paddingBottom="16dp"
+        android:paddingBottom="8dp"
         android:scrollbarStyle="outsideOverlay" />
+
+    <Button
+        android:id="@+id/aboutButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="16dp"
+        android:text="@string/about_licenses_button" />
 
 </LinearLayout>

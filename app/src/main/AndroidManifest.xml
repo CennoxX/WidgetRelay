@@ -83,7 +83,7 @@
             android:label="@string/select_widget"
             android:theme="@style/AppTheme.NoActionBar" />
 
-        <!-- The only screen of the app itself: what is currently being monitored -->
+        <!-- The main screen of the app: shows what is currently being monitored -->
         <activity
             android:name=".widget.ActivityWidgetMonitor"
             android:exported="true"
@@ -95,6 +95,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".widget.ActivityAbout"
+            android:exported="false"
+            android:theme="@style/AppTheme.NoActionBar" />
 
         <service
             android:name=".widget.WidgetMonitorService"

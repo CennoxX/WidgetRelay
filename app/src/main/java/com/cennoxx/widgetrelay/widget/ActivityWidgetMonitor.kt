@@ -101,7 +101,6 @@ class ActivityWidgetMonitor : Activity() {
         // whatever is left below a fixed block
         header = layoutInflater.inflate(R.layout.header_widget_monitor, listView, false)
         listView.addHeaderView(header, null, false)
-
         stateDot = header.findViewById(R.id.stateDot)
         stateText = header.findViewById(R.id.monitorStateText)
         stateHint = header.findViewById(R.id.monitorStateHint)
@@ -139,6 +138,9 @@ class ActivityWidgetMonitor : Activity() {
         wakeLockCheckBox.setOnCheckedChangeListener { _, checked ->
             if (checked == WidgetMonitorRegistry.usesWakeLock(this)) return@setOnCheckedChangeListener
             WidgetMonitorService.setWakeLockEnabled(this, checked)
+        }
+        findViewById<Button>(R.id.aboutButton).setOnClickListener {
+            startActivity(Intent(this, ActivityAbout::class.java))
         }
     }
 

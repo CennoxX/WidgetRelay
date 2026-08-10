@@ -163,7 +163,7 @@
     <string name="error_no_path">No element path configured. Reconfigure the Tasker action.</string>
     <string name="error_path_not_clickable">Element at path \"%1$s\" (or any parent) is not clickable</string>
     <string name="error_text_invalid_regex">\"%1$s\" looks like a /pattern/flags regex but isn’t valid. Supported flags: i, m, s.</string>
-    <string name="error_selector_must_be_path_or_regex">Use a path (/root/...) or a regex.</string>
+    <string name="error_selector_must_be_path_or_regex">Use a path (/root/…) or a regex.</string>
     <string name="error_no_tree">Could not read the widget tree.</string>
     <string name="error_bad_mode">\"%1$s\" is not a valid state. Use on, off or toggle.</string>
 
@@ -173,4 +173,27 @@
     <string name="notification_rebind_title">Widget binding lost</string>
     <string name="notification_rebind_text">\"%1$s\" (%2$s) is no longer bound. Open its action in Tasker and tap Save to rebind it.</string>
     <string name="notification_rebind_fallback_name">A widget</string>
+
+    <!-- About -->
+    <string name="about">About</string>
+    <string name="about_version">Version %1$s</string>
+    <string name="about_description">WidgetRelay monitors Android widgets in the background and makes their data available to Tasker.\n\nSource code:\nhttps://github.com/CennoxX/WidgetRelay</string>
+    <string name="about_licenses">Open source licenses</string>
+    <string name="about_licenses_button">About &amp; Open Source Licenses</string>
+    <string name="about_view_notice">Full Notice &amp; Changes</string>
+    <string name="about_view_license">GNU General Public License (GPLv3)</string>
+
+    <string name="about_license_widgetrelay">WidgetRelay\nCopyright © 2026 CennoxX\nThis program is free software, licensed under the GNU General Public License version 3. See the LICENSE at the bottom for the full license text.\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY.\n\nThis repository is a fork of TaskerPluginSample.</string>
+
+    <string name="about_license_taskerpluginlibrary">Tasker plugin library\nCopyright © João Dias (joaomgcd) and contributors.\nSource: github.com/joaomgcd/TaskerPluginSample\nLicense: GNU General Public License version 3.</string>
+
+    <string name="about_license_tasker_protocol">Tasker plugin protocol helpers\nTaskerPlugin.java and TaskerIntent.java were written by Pent (dinglisch), the author of Tasker, and are included as distributed with TaskerPluginSample.\nThese files are unmodified.\nReference: tasker.joaoapps.com/plugins.html</string>
+    <!-- Kotlin -->
+    <string name="about_license_kotlin">Kotlin Standard Library\nCopyright © 2010–2026 JetBrains s.r.o.\nLicensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.</string>
+
+    <!-- AndroidX -->
+    <string name="about_license_androidx">AndroidX Libraries\nCopyright © 2018–2026 The Android Open Source Project\nLicensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.</string>
+
+    <!-- Gradle & Android Gradle Plugin -->
+    <string name="about_license_gradle">Gradle &amp; Android Gradle Plugin\nCopyright © 2007–2026 Gradle, Inc. and contributors\nLicensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.</string>
 </resources>
