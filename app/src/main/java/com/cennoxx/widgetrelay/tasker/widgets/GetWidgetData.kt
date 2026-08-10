@@ -2,6 +2,9 @@ package com.cennoxx.widgetrelay.tasker.widgets
 
 import android.content.Context
 import com.cennoxx.widgetrelay.R
+import com.cennoxx.widgetrelay.premium.PlayBillingEntitlement
+import com.cennoxx.widgetrelay.premium.TaskerConfigurationLimit
+import com.cennoxx.widgetrelay.premium.TaskerConfigurationRegistry
 import com.cennoxx.widgetrelay.widget.WidgetNode
 import com.cennoxx.widgetrelay.widget.toJsonTree
 import com.joaomgcd.taskerpluginlibrary.action.TaskerPluginRunnerAction
@@ -19,6 +22,7 @@ private const val ERROR_NOT_FOUND = 2
 private const val ERROR_NO_OVERLAY = 3
 private const val ERROR_NO_TREE = 4
 private const val ERROR_INVALID_SELECTOR = 5
+private const val ERROR_FREE_TIER_INACTIVE = 6
 
 @TaskerOutputObject
 class WidgetDataOutput(
@@ -41,6 +45,13 @@ class WidgetDataOutput(
  */
 class GetWidgetDataRunner : TaskerPluginRunnerAction<WidgetActionInput, WidgetDataOutput>() {
     override fun run(context: Context, input: TaskerInput<WidgetActionInput>): TaskerPluginResult<WidgetDataOutput> {
+        val isPremium = PlayBillingEntitlement.get(context).isPremiumCached()
+        if (!TaskerConfigurationLimit.isConfigActive(context, isPremium, input.regular)) {
+            return TaskerPluginResultErrorWithOutput(
+                ERROR_FREE_TIER_INACTIVE,
+                context.getString(R.string.error_free_tier_inactive)
+            )
+        }
         if (!WidgetActionRuntime.hasOverlayPermission(context)) {
             return TaskerPluginResultErrorWithOutput(
                 ERROR_NO_OVERLAY,
@@ -121,6 +132,7 @@ class GetWidgetDataHelper(config: TaskerPluginConfig<WidgetActionInput>) :
 }
 
 class ActivityConfigGetWidgetData : ActivityConfigWidgetActionBase() {
+    override val taskerConfigurationType = TaskerConfigurationRegistry.Type.GET_WIDGET_DATA
     override val queryLabelRes = R.string.label_selector_path_regex_json
     // Empty is a valid configuration here: it means "return everything"
     override val queryRequired = false

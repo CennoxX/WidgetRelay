@@ -166,6 +166,7 @@
     <string name="error_selector_must_be_path_or_regex">Use a path (/root/…) or a regex.</string>
     <string name="error_no_tree">Could not read the widget tree.</string>
     <string name="error_bad_mode">\"%1$s\" is not a valid state. Use on, off or toggle.</string>
+    <string name="error_free_tier_inactive">This integration is no longer active on the free tier. Reconfigure it in Tasker to make it active again, or upgrade to Premium for unlimited integrations.</string>
 
     <!-- Notification: a runner hit error_not_bound and points at the fix -->
     <string name="notification_rebind_channel_name">Widget binding lost</string>
@@ -173,6 +174,21 @@
     <string name="notification_rebind_title">Widget binding lost</string>
     <string name="notification_rebind_text">\"%1$s\" (%2$s) is no longer bound. Open its action in Tasker and tap Save to rebind it.</string>
     <string name="notification_rebind_fallback_name">A widget</string>
+
+    <!-- Premium / Google Play Billing -->
+    <string name="premium_title">Get WidgetRelay Premium</string>
+    <string name="premium_loading">Checking Google Play…</string>
+    <string name="premium_message">Use unlimited Widget Updated events, Get Widget Data actions, and Click Widget actions for a one-time purchase of %1$s.</string>
+    <string name="premium_purchase">Purchase</string>
+    <string name="premium_cancel">Cancel</string>
+    <string name="premium_restore">Restore purchase</string>
+    <string name="premium_unavailable">Google Play billing is currently unavailable.</string>
+    <string name="premium_restore_not_found">No Premium purchase was found for this Google account.</string>
+    <string name="premium_unlocked">Premium unlocked</string>
+    <string name="premium_free_status">Premium version: Unlimited Tasker configurations.\nFree version: One Tasker configuration active at a time</string>
+    <string name="freemium_banner">Free: Only your most recent Tasker configuration stays active.</string>
+    <string name="freemium_unlock_premium">Unlock Premium</string>
+    <string name="toast_freemium_active">Configuration activated, previous configurations are now inactive.</string>
 
     <!-- About -->
     <string name="about">About</string>

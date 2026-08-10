@@ -28,6 +28,8 @@ import androidx.annotation.ColorRes
 import androidx.annotation.StringRes
 import com.cennoxx.widgetrelay.R
 import com.cennoxx.widgetrelay.applyEdgeToEdgeInsets
+import com.cennoxx.widgetrelay.premium.PlayBillingEntitlement
+import com.cennoxx.widgetrelay.premium.PremiumDialog
 import com.cennoxx.widgetrelay.tasker.widgets.WidgetActionRuntime
 
 /**
@@ -42,7 +44,9 @@ import com.cennoxx.widgetrelay.tasker.widgets.WidgetActionRuntime
  * this screen.
  */
 class ActivityWidgetMonitor : Activity() {
-
+    private lateinit var premiumStatus: TextView
+    private lateinit var premiumButtons: View
+    private lateinit var premiumBlock: View
     private lateinit var listView: ListView
     private lateinit var header: View
     private lateinit var stateDot: ImageView
@@ -112,6 +116,15 @@ class ActivityWidgetMonitor : Activity() {
         permissionsContainer = header.findViewById(R.id.permissionsContainer)
         widgetsSummary = header.findViewById(R.id.widgetsSummary)
         wakeLockCheckBox = header.findViewById(R.id.wakeLockCheckBox)
+        premiumBlock = header.findViewById(R.id.premiumBlock)
+        premiumStatus = header.findViewById(R.id.premiumStatusText)
+        premiumButtons = header.findViewById(R.id.premiumButtons)
+        header.findViewById<Button>(R.id.premiumPurchaseButton).setOnClickListener {
+            PremiumDialog.show(this) { renderPremium() }
+        }
+        header.findViewById<Button>(R.id.premiumRestoreButton).setOnClickListener {
+            PlayBillingEntitlement.get(this).refresh { runOnUiThread { renderPremium() } }
+        }
 
         // Created once: re-assigning an adapter would throw the scroll
         // position away on every refresh tick
@@ -146,9 +159,12 @@ class ActivityWidgetMonitor : Activity() {
 
     override fun onResume() {
         super.onResume()
+        renderPremium()
+        PlayBillingEntitlement.get(this).refresh { runOnUiThread { renderPremium() } }
         // The service pushes changes; the tick keeps the relative times honest
         WidgetMonitorService.onStatusesChanged = { handler.post { render() } }
         WidgetMonitorService.ensureRunning(this)
+        PlayBillingEntitlement.get(this).refresh { }
         handler.post(refresh)
     }
 
@@ -443,6 +459,14 @@ class ActivityWidgetMonitor : Activity() {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         render()
+    }
+
+    private fun renderPremium() {
+        val premium = PlayBillingEntitlement.get(this).isPremiumCached()
+        premiumStatus.setText(
+            if (premium) R.string.premium_unlocked else R.string.premium_free_status
+        )
+        premiumBlock.visibility = if (premium) View.GONE else View.VISIBLE
     }
 
     companion object {

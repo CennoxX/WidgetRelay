@@ -27,12 +27,12 @@ jobs:
       - name: Make Gradle wrapper executable
         run: chmod +x gradlew
 
-      - name: Build debug APK
-        run: ./gradlew assembleDebug --no-daemon
+      - name: Build full debug APK
+        run: ./gradlew assembleFullDebug --no-daemon
 
-      - name: Upload debug APK
+      - name: Upload full debug APK
         uses: actions/upload-artifact@v7
         with:
-          name: WidgetRelay-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
+          name: WidgetRelay-full-debug-apk
+          path: app/build/outputs/apk/full/debug/*.apk
           if-no-files-found: error

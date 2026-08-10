@@ -18,6 +18,7 @@ import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.FrameLayout
+import android.widget.LinearLayout
 import android.widget.ListView
 import android.widget.Spinner
 import android.widget.TextView
@@ -25,6 +26,10 @@ import android.widget.Toast
 import androidx.annotation.StringRes
 import com.cennoxx.widgetrelay.R
 import com.cennoxx.widgetrelay.applyEdgeToEdgeInsets
+import com.cennoxx.widgetrelay.premium.PlayBillingEntitlement
+import com.cennoxx.widgetrelay.premium.PremiumConfigStore
+import com.cennoxx.widgetrelay.premium.PremiumDialog
+import com.cennoxx.widgetrelay.premium.TaskerConfigurationRegistry
 import com.cennoxx.widgetrelay.widget.ActivityWidgetSelector
 import com.cennoxx.widgetrelay.widget.WidgetExtractor
 import com.cennoxx.widgetrelay.widget.WidgetGrid
@@ -51,6 +56,9 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
     @get:StringRes
     protected open val queryLabelRes: Int? = null
     protected abstract val helper: TaskerPluginConfigHelper<WidgetActionInput, *, *>
+
+    /** Null for non-billable widget configuration screens. */
+    protected open val taskerConfigurationType: TaskerConfigurationRegistry.Type? = null
 
     /** Whether non-path queries must be regular expressions. */
     protected open val queryMustBePathOrRegex = false
@@ -104,6 +112,10 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
     private var suppressListeners = false
     private var hostView: AppWidgetHostView? = null
     private var viewsInitialized = false
+    private var isEditingExisting = false
+
+    /** Cached at initViews() time so the save path doesn't need a context call. */
+    private var isPremium = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -111,7 +123,7 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
         widgetHost = WidgetHost.get(this)
         widgetHost.startListening()
 
-        val isEditingExisting = intent?.getBundleExtra(TaskerPluginConstants.EXTRA_BUNDLE) != null
+        isEditingExisting = intent?.getBundleExtra(TaskerPluginConstants.EXTRA_BUNDLE) != null
         if (isEditingExisting) {
             initViews()
             // Triggers assignFromInput() with the existing configuration
@@ -129,6 +141,16 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
 
         setContentView(R.layout.activity_config_widget_action)
         applyEdgeToEdgeInsets()
+
+        isPremium = PlayBillingEntitlement.get(this).isPremiumCached()
+
+        // Freemium info banner — only visible on the free tier for billable types
+        val freemiumBanner = buildFreemiumBanner()
+        if (freemiumBanner != null && taskerConfigurationType != null && !isPremium) {
+            // Insert banner at position 0 of rootContainer, above the widget header
+            val root = findViewById<ViewGroup>(R.id.rootContainer)
+            root?.addView(freemiumBanner, 0)
+        }
 
         appNameText = findViewById(R.id.appNameText)
         widgetNameText = findViewById(R.id.widgetNameText)
@@ -242,7 +264,7 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
                     initViews()
                     onProviderPicked(info)
                 } else if (!viewsInitialized) {
-                    // Fresh config, search cancelled before our screen was ever shown - just close
+                    // Fresh config, search canceled before our screen was ever shown - just close
                     finish()
                 } else {
                     statusText.setText(R.string.status_no_widget_selected)
@@ -511,6 +533,14 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
             )
             return
         }
+        val type = taskerConfigurationType
+        @Suppress("UNUSED_VARIABLE") // type is resolved inside completeSave(); kept here for clarity
+        // Free tier: always allow saving. The save itself designates this
+        // configuration as the active freemium one, so no blocking dialog is shown.
+        completeSave()
+    }
+
+    private fun completeSave() {
         // A newly bound widget replaces the one from the previous configuration
         if (savedWidgetId != -1 && savedWidgetId != boundWidgetId) {
             widgetHost.deleteId(savedWidgetId)
@@ -518,7 +548,21 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
             WidgetMonitorRegistry.remove(this, savedWidgetId)
         }
         saved = true
-        onSavingForTasker(inputForTasker.regular)
+        val input = inputForTasker.regular
+        val type = taskerConfigurationType
+        if (type != null) {
+            val payload = PremiumConfigStore.serializeWidgetConfig(input)
+            val configKey = PremiumConfigStore.computeConfigHash(payload)
+            TaskerConfigurationRegistry.record(this, configKey, type)
+            if (!isPremium) {
+                // Last-saved-active: designate this configuration as the active free one.
+                PremiumConfigStore.setActiveConfig(this, payload, boundWidgetId)
+                // Stop watching widgets that the previous free configuration was monitoring.
+                TaskerConfigurationRegistry.pruneInactiveFreemonitoredWidgets(this, isPremium = false)
+                Toast.makeText(this, R.string.toast_freemium_active, Toast.LENGTH_LONG).show()
+            }
+        }
+        onSavingForTasker(input)
         helper.finishForTasker()
     }
 
@@ -527,7 +571,7 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
      * replace any previous free integration as the active one, with a shortcut
      * to the Premium purchase dialog.
      */
-    private fun buildFreemiumBanner(): View? {
+    private fun buildFreemiumBanner(): View {
         val banner = LinearLayout(this)
         banner.orientation = LinearLayout.HORIZONTAL
         banner.gravity = Gravity.CENTER_VERTICAL

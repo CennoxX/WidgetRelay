@@ -2,6 +2,9 @@ package com.cennoxx.widgetrelay.tasker.widgets
 
 import android.content.Context
 import com.cennoxx.widgetrelay.R
+import com.cennoxx.widgetrelay.premium.PlayBillingEntitlement
+import com.cennoxx.widgetrelay.premium.TaskerConfigurationLimit
+import com.cennoxx.widgetrelay.premium.TaskerConfigurationRegistry
 import com.cennoxx.widgetrelay.widget.WidgetMonitorRegistry
 import com.cennoxx.widgetrelay.widget.WidgetMonitorService
 import com.cennoxx.widgetrelay.widget.WidgetNode
@@ -114,6 +117,13 @@ class WidgetUpdatedRunner :
         // cannot restart a dead service: no service, no events, no queries.
         // That job belongs to WidgetMonitorWatchdog.
         val regular = input.regular
+
+        // Free-tier guard: only the most recently saved integration may fire.
+        val isPremium = PlayBillingEntitlement.get(context).isPremiumCached()
+        if (!TaskerConfigurationLimit.isConfigActive(context, isPremium, regular)) {
+            return TaskerPluginResultConditionUnsatisfied()
+        }
+
         ensureMonitored(context, regular)
         WidgetMonitorService.ensureRunning(context)
 
@@ -197,6 +207,7 @@ class WidgetUpdatedHelper(config: TaskerPluginConfig<WidgetActionInput>) :
 }
 
 class ActivityConfigWidgetUpdated : ActivityConfigWidgetActionBase() {
+    override val taskerConfigurationType = TaskerConfigurationRegistry.Type.WIDGET_UPDATED
     override val queryLabelRes = R.string.label_selector_path_regex_optional
     override val queryRequired = false
     override val queryMustBePathOrRegex = true

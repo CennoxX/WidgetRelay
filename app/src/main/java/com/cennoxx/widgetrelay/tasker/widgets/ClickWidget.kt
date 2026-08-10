@@ -2,6 +2,9 @@ package com.cennoxx.widgetrelay.tasker.widgets
 
 import android.content.Context
 import com.cennoxx.widgetrelay.R
+import com.cennoxx.widgetrelay.premium.PlayBillingEntitlement
+import com.cennoxx.widgetrelay.premium.TaskerConfigurationLimit
+import com.cennoxx.widgetrelay.premium.TaskerConfigurationRegistry
 import com.cennoxx.widgetrelay.widget.WidgetNode
 import com.joaomgcd.taskerpluginlibrary.action.TaskerPluginRunnerActionNoOutput
 import com.joaomgcd.taskerpluginlibrary.config.TaskerPluginConfig
@@ -16,10 +19,18 @@ private const val ERROR_NOT_FOUND = 2
 private const val ERROR_NOT_CLICKABLE = 3
 private const val ERROR_NO_OVERLAY = 4
 private const val ERROR_INVALID_SELECTOR = 5
+private const val ERROR_FREE_TIER_INACTIVE = 6
 
 /** Clicks a widget element selected by path, visible text, or a regular expression. */
 class ClickWidgetRunner : TaskerPluginRunnerActionNoOutput<WidgetActionInput>() {
     override fun run(context: Context, input: TaskerInput<WidgetActionInput>): TaskerPluginResult<Unit> {
+        val isPremium = PlayBillingEntitlement.get(context).isPremiumCached()
+        if (!TaskerConfigurationLimit.isConfigActive(context, isPremium, input.regular)) {
+            return TaskerPluginResultError(
+                ERROR_FREE_TIER_INACTIVE,
+                context.getString(R.string.error_free_tier_inactive)
+            )
+        }
         if (!WidgetActionRuntime.hasOverlayPermission(context)) {
             return TaskerPluginResultError(ERROR_NO_OVERLAY, context.getString(R.string.error_no_overlay))
         }
@@ -75,6 +86,7 @@ class ClickWidgetHelper(config: TaskerPluginConfig<WidgetActionInput>) :
 }
 
 class ActivityConfigClickWidget : ActivityConfigWidgetActionBase() {
+    override val taskerConfigurationType = TaskerConfigurationRegistry.Type.CLICK_WIDGET
     override val queryLabelRes = R.string.label_selector
     override fun isNodeSelectable(node: WidgetNode) = node.clickable
     override val selectableDescriptionRes = R.string.selectable_clickable

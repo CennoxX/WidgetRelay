@@ -67,8 +67,11 @@ object WidgetMonitorRegistry {
         }
     }
 
-    private fun prefs(context: Context) =
+    /** Shared application preferences, also used by premium and Tasker integration state. */
+    internal fun preferences(context: Context) =
         context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+
+    private fun prefs(context: Context) = preferences(context)
 
     fun entries(context: Context): List<Entry> {
         val raw = prefs(context).getString(KEY_ENTRIES, null) ?: return emptyList()

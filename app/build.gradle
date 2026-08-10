@@ -19,6 +19,23 @@ android {
         targetSdkVersion 37
         versionCode 2
         versionName "2.0"
+        // Default build-config flag (can be overridden per-flavor)
+        buildConfigField "boolean", "IS_FULL_BUILD", "false"
+    }
+    flavorDimensions "tier"
+    productFlavors {
+        freemium {
+            dimension "tier"
+            // freemium behaves normally (not full)
+            buildConfigField "boolean", "IS_FULL_BUILD", "false"
+        }
+        full {
+            dimension "tier"
+            // Full build: act as if premium / no freemium restrictions
+            buildConfigField "boolean", "IS_FULL_BUILD", "true"
+            // Optionally give full its own application id suffix if needed
+            // applicationIdSuffix ".full"
+        }
     }
     signingConfigs {
         if (keystorePropertiesFile.exists()) {
@@ -44,12 +61,19 @@ android {
         targetCompatibility 21
     }
     namespace 'com.cennoxx.widgetrelay'
+
+    buildFeatures {
+        buildConfig true
+    }
 }
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     implementation 'androidx.activity:activity-ktx:1.8.0'
     implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'com.android.billingclient:billing:9.1.0'
 
     implementation project(':taskerpluginlibrary')
+
+    testImplementation 'junit:junit:4.13.2'
 }
