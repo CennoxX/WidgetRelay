@@ -47,8 +47,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginBottom="8dp">
+        android:gravity="center_vertical">
 
         <TextView
             android:layout_width="wrap_content"
@@ -79,6 +78,37 @@
 
     </LinearLayout>
 
+    <!-- Widget Preview Header -->
+    <LinearLayout
+        android:id="@+id/previewHeaderRow"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="4dp"
+        android:background="?android:attr/selectableItemBackground"
+        android:paddingBottom="4dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Widget Preview"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/previewChevron"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginEnd="8dp"
+            android:gravity="center"
+            android:text="▾"
+            android:textSize="16sp" />
+
+    </LinearLayout>
+
+    <!-- Collapsible Widget Preview -->
     <FrameLayout
         android:id="@+id/previewFrame"
         android:layout_width="match_parent"

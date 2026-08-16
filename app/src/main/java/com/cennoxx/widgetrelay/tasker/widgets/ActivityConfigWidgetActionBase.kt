@@ -78,12 +78,16 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
     private lateinit var widgetNameText: TextView
     private lateinit var spanXSpinner: Spinner
     private lateinit var spanYSpinner: Spinner
+    private lateinit var previewHeaderRow: LinearLayout
+    private lateinit var previewChevron: TextView
     private lateinit var previewFrame: FrameLayout
+
     private lateinit var queryEditText: EditText
     private lateinit var queryClearButton: TextView
     private lateinit var statusText: TextView
     private lateinit var nodesListView: ListView
 
+    private var previewExpandedOverride: Boolean? = null
     private var currentNodes = emptyList<WidgetNode>()
     // Y tops out one row lower than X - see WidgetGrid.MAX_SPAN_Y
     private val spansX = (1..WidgetGrid.MAX_SPAN_X).toList()
@@ -132,7 +136,14 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
         queryClearButton = findViewById(R.id.queryClearButton)
         statusText = findViewById(R.id.statusText)
         nodesListView = findViewById(R.id.nodesListView)
+        previewHeaderRow = findViewById(R.id.previewHeaderRow)
+        previewChevron = findViewById(R.id.previewChevron)
+        previewFrame = findViewById(R.id.previewFrame)
 
+        previewHeaderRow.setOnClickListener {
+            previewExpandedOverride = !isPreviewExpanded()
+            renderPreviewVisibility()
+        }
         setupSizeSpinners()
         setupQueryClearButton()
 
@@ -174,6 +185,16 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
             }
             override fun afterTextChanged(s: Editable) {}
         })
+    }
+
+    private fun isPreviewExpanded(): Boolean {
+        return previewExpandedOverride ?: true
+    }
+
+    private fun renderPreviewVisibility() {
+        val expanded = isPreviewExpanded()
+        previewFrame.visibility = if (expanded) View.VISIBLE else View.GONE
+        previewChevron.text = if (expanded) "▴" else "▾"
     }
 
     private fun setupSizeSpinners() {
@@ -308,6 +329,7 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
             )
         )
         applySizeAndExtract()
+        renderPreviewVisibility()
     }
 
     private fun applySizeAndExtract() {
@@ -484,6 +506,38 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
         saved = true
         onSavingForTasker(inputForTasker.regular)
         helper.finishForTasker()
+    }
+
+    /**
+     * Builds a non-dismissible banner informing free-tier users that saving will
+     * replace any previous free integration as the active one, with a shortcut
+     * to the Premium purchase dialog.
+     */
+    private fun buildFreemiumBanner(): View? {
+        val banner = LinearLayout(this)
+        banner.orientation = LinearLayout.HORIZONTAL
+        banner.gravity = Gravity.CENTER_VERTICAL
+        banner.setPadding(32, 24, 32, 24)
+        banner.setBackgroundColor(0xFFFFF3CD.toInt()) // warm amber, accessible
+        banner.layoutParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        ).apply {
+            bottomMargin = 16
+        }
+
+        val text = TextView(this)
+        text.setText(R.string.freemium_banner)
+        text.layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+        text.setTextColor(0xFF856404.toInt())
+        banner.addView(text)
+
+        val button = Button(this)
+        button.setText(R.string.freemium_unlock_premium)
+        button.setOnClickListener { PremiumDialog.show(this) {} }
+        banner.addView(button)
+
+        return banner
     }
 
     override fun onDestroy() {
