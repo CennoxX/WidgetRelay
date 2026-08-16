@@ -35,11 +35,9 @@ WidgetRelay registers four Tasker plugin actions (and one [event](#the-event)). 
 
 | Action | Input | Output |
 | --- | --- | --- |
-| **Get Widget Data** | element path | `%widget_value` — the element's text, content description or resource id |
+| **Get Widget Data** | element path / regex | `%widget_value` — the element's text, content description or resource id |
 | **Get Widget Data** | *(empty path)* | `%widget_json` — the whole widget as a JSON tree |
-| **Click Widget** | element path | — |
-| **Click Widget** | text | — |
-| **Click Widget** | regex | — |
+| **Click Widget** | element path / text / regex | — |
 | **Pause Watching Widgets** | pause / resume / toggle | `%widget_setting_state` — the resulting state |
 | **Keep the CPU Awake** | on / off / toggle | `%widget_setting_state` — the resulting state |
 
