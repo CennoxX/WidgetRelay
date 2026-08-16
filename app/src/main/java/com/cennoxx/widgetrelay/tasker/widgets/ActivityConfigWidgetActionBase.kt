@@ -164,7 +164,11 @@ abstract class ActivityConfigWidgetActionBase : Activity(), TaskerPluginConfig<W
                 if (value == null) {
                     false
                 } else {
-                    queryEditText.setText("/${value.map { if (it in """\.^$|?*+()[]{}""") "\\$it" else it }.joinToString("")}/")
+                    queryEditText.setText("/${value.map {
+                        if (it.isDigit()) "\\d"
+                        else if (it in """\.^$|?*+()[]{}""") "\\$it"
+                        else it
+                    }.joinToString("")}/")
                     true
                 }
             }
